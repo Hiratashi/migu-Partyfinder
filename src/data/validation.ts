@@ -2,33 +2,34 @@ import { z } from "zod";
 
 export const partySchema = z.object({
   title: z.string().trim().max(80).optional().default(""),
-  encounters: z.array(z.string().uuid()).min(1).max(5),
+  encounters: z.array(z.string().uuid()).min(1).max(20),
   startTime: z.string().datetime(),
   endTime: z.string().datetime().nullable().optional(),
-  difficultyStage: z.number().int().min(1).max(99),
+  difficultyStage: z.number().int().min(1).max(3),
   isPractice: z.boolean(),
-  practiceEncounterId: z.string().uuid().nullable().optional(),
-  needPhysical: z.number().int().min(0).max(8),
-  needMagical: z.number().int().min(0).max(8),
-  needSupport: z.number().int().min(0).max(8)
+  practiceEncounterIds: z.array(z.string().uuid()).max(20).default([]),
+  needPhysical: z.number().int().min(0).max(12),
+  needMagical: z.number().int().min(0).max(12),
+  needSupport: z.number().int().min(0).max(12)
 }).superRefine((v, ctx) => {
   if (v.endTime && new Date(v.endTime) <= new Date(v.startTime)) ctx.addIssue({ code: "custom", message: "End time must be after start time", path: ["endTime"] });
-  if (v.isPractice && !v.practiceEncounterId) ctx.addIssue({ code: "custom", message: "Choose a practice encounter", path: ["practiceEncounterId"] });
-  if (v.practiceEncounterId && !v.encounters.includes(v.practiceEncounterId)) ctx.addIssue({ code: "custom", message: "Practice encounter must be part of the run", path: ["practiceEncounterId"] });
+  if (v.isPractice && v.practiceEncounterIds.length === 0) ctx.addIssue({ code: "custom", message: "Choose at least one fight to practice", path: ["practiceEncounterIds"] });
+  if (v.practiceEncounterIds.some(id => !v.encounters.includes(id))) ctx.addIssue({ code: "custom", message: "Practice fights must be part of the selected run", path: ["practiceEncounterIds"] });
 });
 
-export const availabilitySchema = z.object({
-  encounters: z.array(z.string().uuid()).min(1).max(5),
+const weeklySlotSchema = z.object({
+  day: z.number().int().min(0).max(6),
+  minute: z.number().int().min(0).max(1410).refine(v => v % 30 === 0, "Time slots must use 30-minute increments")
+});
+
+export const weeklyAvailabilitySchema = z.object({
+  encounters: z.array(z.string().uuid()).min(1).max(20),
   characterIds: z.array(z.string().uuid()).min(1).max(30),
-  startTime: z.string().datetime(),
-  endTime: z.string().datetime(),
-  minDifficulty: z.number().int().min(1).max(99),
-  maxDifficulty: z.number().int().min(1).max(99),
+  stages: z.array(z.number().int().min(1).max(3)).min(1).max(3).transform(v => [...new Set(v)].sort()),
   practiceOk: z.boolean(),
+  timezone: z.string().trim().min(1).max(100),
+  slots: z.array(weeklySlotSchema).max(336),
   notes: z.string().trim().max(250).optional().default("")
-}).superRefine((v, ctx) => {
-  if (new Date(v.endTime) <= new Date(v.startTime)) ctx.addIssue({ code: "custom", message: "Availability end must be after start", path: ["endTime"] });
-  if (v.maxDifficulty < v.minDifficulty) ctx.addIssue({ code: "custom", message: "Maximum difficulty must be at least the minimum", path: ["maxDifficulty"] });
 });
 
 export const characterSchema = z.object({ classId: z.string().uuid(), characterName: z.string().trim().min(2).max(32) });

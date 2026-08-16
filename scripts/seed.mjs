@@ -3,7 +3,8 @@ const { Client } = pg;
 const db = new Client({ connectionString: process.env.DATABASE_URL });
 await db.connect();
 try {
-  const raid = await db.query(`INSERT INTO raids(slug,name) VALUES('doom-aporia','Doom Aporia') ON CONFLICT(slug) DO UPDATE SET name=EXCLUDED.name RETURNING id`);
+  const raid = await db.query(`INSERT INTO raids(slug,name,party_size) VALUES('doom-aporia','Doom Aporia',6)
+    ON CONFLICT(slug) DO UPDATE SET name=EXCLUDED.name, party_size=EXCLUDED.party_size RETURNING id`);
   const raidId = raid.rows[0].id;
   for (const [code, name, order] of [
     ['21-1','Doom Aporia 21-1',1],
