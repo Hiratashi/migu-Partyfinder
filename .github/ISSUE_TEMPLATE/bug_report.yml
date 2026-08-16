@@ -1,5 +1,5 @@
-name: "🐛 Bug report"
-description: "Report something that is not working as expected"
+name: 🐛 Bug report
+description: Report something that is not working as expected
 title: "[Bug]: "
 labels:
   - bug
@@ -9,14 +9,14 @@ body:
       value: |
         Thanks for helping test Migu's Partyfinder Tool.
 
-        Please do not include passwords, tokens, cookies, `.env` contents or other secrets.
+        Please describe the problem as clearly as possible. Do not include passwords, tokens, cookies, `.env` contents, private keys or other sensitive information.
 
   - type: textarea
     id: happened
     attributes:
       label: What happened?
-      description: Describe the problem as clearly as you can.
-      placeholder: Tell us what went wrong.
+      description: Describe the problem you encountered.
+      placeholder: A clear and concise description of the bug
     validations:
       required: true
 
@@ -24,7 +24,8 @@ body:
     id: expected
     attributes:
       label: What did you expect?
-      description: What should have happened instead?
+      description: Describe what you expected to happen instead.
+      placeholder: A clear and concise description of the expected behavior
     validations:
       required: true
 
@@ -32,32 +33,31 @@ body:
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: List the steps that trigger the issue.
+      description: List the steps that consistently reproduce the problem.
       placeholder: |
-        1. Open ...
+        1. Go to ...
         2. Click ...
         3. Select ...
-        4. See error ...
+        4. The problem occurs
     validations:
       required: true
 
   - type: dropdown
     id: area
     attributes:
-      label: Which area is affected?
+      label: Which page or feature?
+      description: Select the area where you encountered the problem.
       options:
         - Login / Discord authentication
-        - Profile / Characters
-        - Availability
-        - Party browser
-        - Create / Edit Party
-        - Join / Leave Party
+        - Parties
+        - Party creation
+        - Party details
         - Invitations
         - My Parties
+        - Availability
+        - Characters / Profile
         - History
         - Admin
-        - Time / Timezone
-        - Mobile / Responsive UI
         - Other
     validations:
       required: true
@@ -66,7 +66,7 @@ body:
     id: browser
     attributes:
       label: Browser and device
-      description: Example: Chrome 151 on Windows 11, Safari on iPhone.
+      description: "Example: Chrome 151 on Windows 11, Safari on iPhone."
       placeholder: Chrome 151 / Windows 11
     validations:
       required: true
@@ -76,11 +76,12 @@ body:
     attributes:
       label: Screenshot or additional context
       description: You can drag screenshots into this box. Remove any sensitive information first.
+      placeholder: Add screenshots or anything else that may help explain the problem
 
-- type: checkboxes
-  id: safety
-  attributes:
-    label: Sensitive information
-    options:
-      - label: I have checked that this report does not contain passwords, tokens, cookies, `.env` contents or private keys.
-        required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive information
+      options:
+        - label: I have checked that this report does not contain passwords, tokens, cookies, `.env` contents or private keys.
+          required: true
