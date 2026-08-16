@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🔒 Security-sensitive report"
+    url: "https://github.com/Hiratashi/migu-s-Partyfinder"
+    about: "Do not publish secrets or exploit details in a public issue. Contact the maintainer privately."

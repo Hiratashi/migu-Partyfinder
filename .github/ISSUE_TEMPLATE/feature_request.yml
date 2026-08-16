@@ -1,0 +1,52 @@
+name: "💡 Feature / improvement request"
+description: "Suggest a new feature, quality-of-life improvement or UX change"
+title: "[Idea]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Migu's Partyfinder Tool.
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: What would you like improved?
+      description: Describe the feature or improvement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: Explain why this would be useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Suggested behavior
+      description: How do you imagine it working?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: importance
+    attributes:
+      label: How important is this to you?
+      options:
+        - Nice to have
+        - Useful
+        - Important
+        - Very important
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, examples or other context are welcome.

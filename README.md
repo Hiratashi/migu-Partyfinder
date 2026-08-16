@@ -1,66 +1,90 @@
 # Migu's Partyfinder Tool
 
-A community-built, guild-only raid party finder for **Elsword**. The current implementation focuses on **Doom Aporia**, with the data model designed so additional raids and party sizes can be added later.
+> **Beta** — Migu's Partyfinder Tool is live and ready for guild testing. Features and data may still change while feedback is collected.
+
+**Live site:** https://migu-partyfinder.tsukuyomi.ch
+
+A community-built, guild-only raid party finder for **Elsword**. The current focus is **Doom Aporia**, with the application designed so more raids can be added later.
 
 > This is an unofficial fan/community project. It is not affiliated with, endorsed by, or operated by KOG Games or any game/server operator. Game names and related trademarks belong to their respective owners.
+
+## For guild members
+
+If you just want to use Partyfinder, start here:
+
+- [User Guide](docs/USER-GUIDE.md)
+- [Beta information](docs/BETA.md)
+- [Report a bug or suggest an improvement](https://github.com/Hiratashi/migu-s-Partyfinder/issues)
 
 ## Current features
 
 - Discord OAuth login; no local passwords.
-- Guild membership verification at login.
-- Optional required Discord role.
-- Secure random, database-backed application sessions; Discord access tokens are discarded after login.
-- Open party browser with creator Discord username.
-- A dedicated **My Parties** view for parties created by the current user.
-- Doom Aporia encounters 21-1 through 21-5 with Full Run selection.
-- Difficulty stages 1-3.
-- Clear groups and multi-fight practice groups.
-- Configurable raid party size (Doom currently uses 6).
-- Physical / Magical / Support party needs.
-- Party lifecycle: open/full, edit, leave, kick, complete, cancel, and history/archive.
-- Persistent weekly availability profile with 30-minute blocks for all seven days.
-- Availability preferences for encounters, characters, stages, practice groups, timezone, and notes.
-- Party-to-player matching based on weekly schedule, encounters, difficulty, practice preference and eligible characters.
-- Invitations and invitation acceptance.
-- PostgreSQL migrations and seed data.
-- Docker Compose deployment.
-- Baseline security headers, same-origin checks for write requests, non-root application container, dropped Linux capabilities, and audit-log support.
+- Guild membership verification.
+- Character profiles with class selection and copyable in-game names.
+- Weekly availability with local-time handling.
+- Open party browser.
+- Create, edit, join, leave, cancel and complete parties.
+- Party invitations.
+- Physical / Magical / Support composition requirements.
+- Doom Aporia encounter and stage selection.
+- Practice and clear party support.
+- My Parties and party history.
+- Admin dashboard for users, raids, classes, parties and audit events.
+- Automatic party lifecycle handling, including expiry and guild-leave cleanup.
+- PostgreSQL persistence, Docker deployment and Caddy/HTTPS production hosting.
+- Application health checks, same-origin protection and rate limiting.
+
+## Beta status
+
+The core workflow is working and the live service is available for testing.
+
+During beta:
+
+- bugs may still appear;
+- UX may change based on feedback;
+- admin configuration may be adjusted;
+- database resets or migrations are still possible if needed.
+
+Please use GitHub Issues for actionable bug reports and improvement requests.
+
+See [docs/BETA.md](docs/BETA.md) for details.
+
+## Quick start
+
+1. Open https://migu-partyfinder.tsukuyomi.ch
+2. Log in with Discord.
+3. Add your Elsword character(s).
+4. Set your weekly availability.
+5. Browse existing parties or create one.
+6. Join with an eligible character.
+7. Use **My Parties** to manage your upcoming raids.
+
+Full instructions: [docs/USER-GUIDE.md](docs/USER-GUIDE.md)
 
 ## Architecture
 
 ```text
 Browser
-  |
-  | HTTPS in production
-  v
+   |
+   | HTTPS
+   v
+Caddy
+   |
+   v
+127.0.0.1:3000
+   |
+   v
 Next.js / TypeScript
-  |        \
-  |         \--> Discord OAuth / Discord API
-  v
+   |
+   +------> Discord OAuth / Discord API
+   |
+   v
 PostgreSQL
 ```
 
-The application is intentionally a modular monolith. For a guild-sized service this keeps deployment and maintenance much simpler than splitting the frontend, API and authentication into separate services. A Discord notification bot can be added later as another container.
+The app is intentionally a modular monolith. For a guild-sized service, that keeps deployment and maintenance simpler than splitting the frontend, API and authentication into separate services.
 
-## Discord application
-
-Create an application in the Discord Developer Portal and configure an OAuth2 redirect URI.
-
-Local development:
-
-```text
-http://localhost:3000/api/auth/callback
-```
-
-Production example:
-
-```text
-https://partyfinder.example.com/api/auth/callback
-```
-
-The application requests the Discord scopes required for identity and guild membership verification. `DISCORD_GUILD_ID` limits access to the configured guild. `DISCORD_REQUIRED_ROLE_ID` can optionally restrict access further.
-
-## Configuration
+## Local development
 
 Copy the example environment file:
 
@@ -74,35 +98,11 @@ Generate a strong application secret:
 openssl rand -hex 32
 ```
 
-Configure at least:
-
-```dotenv
-APP_URL=http://localhost:3000
-DATABASE_URL=postgresql://partyfinder:change-me@db:5432/partyfinder
-POSTGRES_DB=partyfinder
-POSTGRES_USER=partyfinder
-POSTGRES_PASSWORD=change-me
-
-DISCORD_CLIENT_ID=
-DISCORD_CLIENT_SECRET=
-DISCORD_GUILD_ID=
-DISCORD_REQUIRED_ROLE_ID=
-
-APP_SECRET=
-SECURE_COOKIES=false
-```
-
-Never commit `.env` or real secrets.
-
-## Docker
-
-Start the application with:
+Start the stack:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
-
-The migration container applies pending SQL migrations and seed data before the application starts.
 
 Local URL:
 
@@ -110,85 +110,90 @@ Local URL:
 http://localhost:3000
 ```
 
-## Updating after pulling changes
-
-When an update contains database migrations:
-
-```bash
-docker compose run --rm migrate
-```
-
-Then rebuild/restart:
-
-```bash
-docker compose up -d --build
-```
-
-## Production deployment
-
-Recommended topology:
-
-```text
-Internet
-   |
-Cloudflare / firewall / TLS
-   |
-Reverse proxy (Caddy, Traefik or nginx)
-   |
-127.0.0.1:3000 -> Partyfinder
-   |
-private Docker network -> PostgreSQL
-```
-
-For production:
+Local development should use:
 
 ```dotenv
-APP_URL=https://partyfinder.example.com
+APP_URL=http://localhost:3000
+SECURE_COOKIES=false
+```
+
+Never commit `.env` or real secrets.
+
+## Production
+
+The current production deployment uses:
+
+```text
+https://migu-partyfinder.tsukuyomi.ch
+```
+
+Production settings use:
+
+```dotenv
+APP_URL=https://migu-partyfinder.tsukuyomi.ch
 SECURE_COOKIES=true
 ```
 
-Do not expose PostgreSQL directly to the Internet.
+The public reverse proxy exposes only HTTP/HTTPS. The Next.js application remains bound to loopback and PostgreSQL is not published to the host network.
 
-### Security checklist
+Production deployment details are documented in:
 
-- Use HTTPS only in production.
-- Keep Node.js, Next.js, PostgreSQL and npm dependencies patched.
-- Use strong independent secrets.
-- Add edge/reverse-proxy rate limiting for authentication and write endpoints.
-- Back up PostgreSQL and periodically test restores.
-- Do not expose the Docker socket or management dashboards publicly.
-- Keep authorization checks on every write/admin operation; hiding UI buttons is not authorization.
-- Review CSP hardening before a higher-risk public deployment.
+- `PRODUCTION-DEPLOYMENT-3B.md`
+- `PRODUCTION-DEPLOYMENT-3B1.md`
+- `PRODUCTION-BASELINE.md`
+- `DATABASE-BACKUP-RESTORE.md`
 
-## Data-driven raids and classes
+## Feedback and issues
 
-Raids, encounters and classes are database data rather than hard-coded UI branches. Doom Aporia currently has a party size of 6. A future raid can use a different `party_size`, and the party-needs selectors will use that value.
+GitHub Issues is the preferred place for beta feedback that needs action.
 
-Character/class icons can be stored in `public/class-icons/` and referenced through the class data.
+Use:
 
-## Availability model
+- **Bug report** when something is not working as expected.
+- **Feature / improvement request** for ideas, UX improvements or new functionality.
 
-Each user has one persistent weekly availability profile per raid. The profile contains:
+Please avoid posting secrets, Discord tokens, passwords, `.env` contents or private server information in issues.
 
-- 30-minute availability blocks for Monday-Sunday
-- timezone
-- encounters they are willing to run
-- eligible characters
-- accepted difficulty stages
-- whether practice groups are acceptable
-- an optional note
+## Development status
 
-The matcher compares a party's actual absolute start/end time against each player's recurring weekly schedule in that player's saved timezone.
+Current stage:
 
-## Planned additions
+```text
+Beta / UX polish
+```
 
-- Invitation decline/expiry and leader-side revoke controls.
-- Better party composition visualization.
-- Discord bot reminders and mentions.
-- Ready checks.
-- Admin UI for raids/classes.
-- Automated tests and CI.
+Development is continuing on feature branches before changes are merged into `main`, which is treated as the production baseline.
+
+## Tech stack
+
+- Next.js
+- React
+- TypeScript
+- PostgreSQL
+- Docker / Docker Compose
+- Caddy
+- Discord OAuth2
+
+## Security notes
+
+The production deployment includes:
+
+- HTTPS
+- secure HTTP-only session cookies
+- same-origin protection for state-changing browser requests
+- application-level rate limiting
+- disabled-account/session checks
+- non-root application container
+- dropped Linux capabilities
+- host and cloud firewalls
+- PostgreSQL kept off the public network
+- application and database health checks
+- audit logging for important state-changing operations
+
+## Project scope
+
+The current raid focus is Doom Aporia. Raid, encounter and class data are stored in PostgreSQL so additional content can be introduced without redesigning the entire application.
 
 ## License
 
-Add the license you want to use before redistributing the project under a specific open-source license.
+No open-source license has been selected yet. Until a license is added, the repository is publicly viewable but normal copyright rules still apply.
