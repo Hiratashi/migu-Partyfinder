@@ -5,7 +5,7 @@ import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
   title: "Migu's Partyfinder Tool",
-  description: "Guild-only Elsword raid party finder",
+  description: "Guild-only raid party finder",
 };
 
 export default async function RootLayout({
@@ -22,6 +22,7 @@ export default async function RootLayout({
           ? <SiteHeader user={{
               username:user.username,
               display_name:user.display_name,
+              is_admin:user.is_admin,
             }}/>
           : <nav className="nav">
               <Link href="/" className="brand brand-home">

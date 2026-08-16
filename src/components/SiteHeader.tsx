@@ -7,7 +7,11 @@ import AccountMenu from "./AccountMenu";
 export default function SiteHeader({
   user,
 }:{
-  user:{username:string;display_name:string|null};
+  user:{
+    username:string;
+    display_name:string|null;
+    is_admin:boolean;
+  };
 }) {
   const pathname=usePathname();
 

@@ -7,7 +7,11 @@ import { usePathname } from "next/navigation";
 export default function AccountMenu({
   user,
 }:{
-  user:{username:string;display_name:string|null};
+  user:{
+    username:string;
+    display_name:string|null;
+    is_admin:boolean;
+  };
 }) {
   const pathname=usePathname();
   const [open,setOpen]=useState(false);
@@ -28,6 +32,7 @@ export default function AccountMenu({
 
     window.addEventListener("pointerdown",onPointer);
     window.addEventListener("keydown",onKey);
+
     return ()=>{
       window.removeEventListener("pointerdown",onPointer);
       window.removeEventListener("keydown",onKey);
@@ -50,8 +55,16 @@ export default function AccountMenu({
         <strong>{user.display_name??user.username}</strong>
         <span>@{user.username}</span>
       </div>
+
       <Link href="/availability" role="menuitem">Availability</Link>
       <Link href="/profile" role="menuitem">Profile & characters</Link>
+
+      {user.is_admin&&<>
+        <div className="account-menu-divider"/>
+        <Link href="/admin/raids" role="menuitem">Raid administration</Link>
+        <Link href="/admin/classes" role="menuitem">Class administration</Link>
+      </>}
+
       <form action="/api/auth/logout" method="post">
         <button type="submit" role="menuitem">Logout</button>
       </form>
