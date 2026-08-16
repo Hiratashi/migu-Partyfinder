@@ -9,6 +9,7 @@ export type RaidConfig = {
   default_stage:number;
   practice_supported:boolean;
   active:boolean;
+  sort_order:number;
 };
 
 export type RaidEncounter = {
@@ -26,18 +27,27 @@ function normalizeRaid(row:any):RaidConfig {
     default_stage:Number(row.default_stage),
     practice_supported:Boolean(row.practice_supported),
     active:Boolean(row.active),
+    sort_order:Number(row.sort_order??100),
   };
 }
 
 export async function getActiveRaids():Promise<RaidConfig[]> {
   const r=await query<any>(`
     SELECT
-      id,slug,name,party_size,supported_stages,default_stage,
-      practice_supported,active
+      id,
+      slug,
+      name,
+      party_size,
+      supported_stages,
+      default_stage,
+      practice_supported,
+      active,
+      sort_order
     FROM raids
     WHERE active=true
-    ORDER BY name
+    ORDER BY sort_order,name
   `);
+
   return r.rows.map(normalizeRaid);
 }
 
@@ -47,8 +57,15 @@ export async function getRaidBySlug(
 ):Promise<RaidConfig|null> {
   const r=await query<any>(`
     SELECT
-      id,slug,name,party_size,supported_stages,default_stage,
-      practice_supported,active
+      id,
+      slug,
+      name,
+      party_size,
+      supported_stages,
+      default_stage,
+      practice_supported,
+      active,
+      sort_order
     FROM raids
     WHERE slug=$1
       ${activeOnly?"AND active=true":""}
@@ -63,8 +80,15 @@ export async function getRaidById(
 ):Promise<RaidConfig|null> {
   const r=await query<any>(`
     SELECT
-      id,slug,name,party_size,supported_stages,default_stage,
-      practice_supported,active
+      id,
+      slug,
+      name,
+      party_size,
+      supported_stages,
+      default_stage,
+      practice_supported,
+      active,
+      sort_order
     FROM raids
     WHERE id=$1
     LIMIT 1
@@ -82,6 +106,7 @@ export async function getRaidEncounters(
     WHERE raid_id=$1
     ORDER BY sort_order
   `,[raidId]);
+
   return r.rows;
 }
 

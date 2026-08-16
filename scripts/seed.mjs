@@ -4,16 +4,19 @@ const { Client } = pg;
 const db = new Client({ connectionString: process.env.DATABASE_URL });
 await db.connect();
 
-try {
+async function upsertRaid(config) {
   const raid = await db.query(`
     INSERT INTO raids(
-      slug,name,party_size,supported_stages,default_stage,
-      practice_supported,active
+      slug,
+      name,
+      party_size,
+      supported_stages,
+      default_stage,
+      practice_supported,
+      active,
+      sort_order
     )
-    VALUES(
-      'doom-aporia','Doom Aporia',6,
-      ARRAY[1,2,3]::smallint[],3,true,true
-    )
+    VALUES($1,$2,$3,$4::smallint[],$5,$6,$7,$8)
     ON CONFLICT(slug)
     DO UPDATE SET
       name=EXCLUDED.name,
@@ -21,19 +24,23 @@ try {
       supported_stages=EXCLUDED.supported_stages,
       default_stage=EXCLUDED.default_stage,
       practice_supported=EXCLUDED.practice_supported,
-      active=EXCLUDED.active
+      active=EXCLUDED.active,
+      sort_order=EXCLUDED.sort_order
     RETURNING id
-  `);
+  `,[
+    config.slug,
+    config.name,
+    config.partySize,
+    config.stages,
+    config.defaultStage,
+    config.practiceSupported,
+    config.active,
+    config.sortOrder,
+  ]);
 
   const raidId=raid.rows[0].id;
 
-  for(const [code,name,order] of [
-    ['21-1','Doom Aporia 21-1',1],
-    ['21-2','Doom Aporia 21-2',2],
-    ['21-3','Doom Aporia 21-3',3],
-    ['21-4','Doom Aporia 21-4',4],
-    ['21-5','Doom Aporia 21-5',5],
-  ]) {
+  for(const [code,name,order] of config.encounters) {
     await db.query(`
       INSERT INTO encounters(raid_id,code,name,sort_order)
       VALUES($1,$2,$3,$4)
@@ -43,6 +50,41 @@ try {
         sort_order=EXCLUDED.sort_order
     `,[raidId,code,name,order]);
   }
+}
+
+try {
+  await upsertRaid({
+    slug:'serpentium',
+    name:'Serpentium Raid',
+    partySize:6,
+    stages:[2,3],
+    defaultStage:3,
+    practiceSupported:true,
+    active:true,
+    sortOrder:10,
+    encounters:[
+      ['20-4','Serpentium Tower',1],
+      ['20-5','Concert Hall',2],
+    ],
+  });
+
+  await upsertRaid({
+    slug:'doom-aporia',
+    name:'Doom Aporia',
+    partySize:6,
+    stages:[1,2,3],
+    defaultStage:3,
+    practiceSupported:true,
+    active:true,
+    sortOrder:20,
+    encounters:[
+      ['21-1','Doom Aporia 21-1',1],
+      ['21-2','Doom Aporia 21-2',2],
+      ['21-3','Doom Aporia 21-3',3],
+      ['21-4','Doom Aporia 21-4',4],
+      ['21-5','Doom Aporia 21-5',5],
+    ],
+  });
 
   const classes=[
     ['shakti','Shakti','SH','PHYSICAL','DPS'],
