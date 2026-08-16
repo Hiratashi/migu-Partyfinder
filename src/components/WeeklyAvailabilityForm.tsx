@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ClassIcon from "./ClassIcon";
 
 type E={id:string;code:string};
 type C={
@@ -9,6 +10,7 @@ type C={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path?:string|null;
 };
 type Slot={day:number;minute:number};
 type Initial={
@@ -26,6 +28,19 @@ const DAYS=[
 ];
 const MINUTES=Array.from({length:48},(_,i)=>i*30);
 const key=(day:number,minute:number)=>`${day}:${minute}`;
+function shortDamage(value:string) {
+  if(value==="PHYSICAL")return "PHY";
+  if(value==="MAGICAL")return "MAG";
+  if(value==="HYBRID")return "HYB";
+  return value;
+}
+
+function shortRole(value:string) {
+  if(value==="SUPPORT")return "SUP";
+  if(value==="FLEX")return "FLEX";
+  return value;
+}
+
 const label=(minute:number)=>
   `${String(Math.floor(minute/60)).padStart(2,"0")}:${
     minute%60===0?"00":"30"
@@ -298,21 +313,38 @@ export default function WeeklyAvailabilityForm({
 
       <div>
         <div className="muted">Characters you can bring</div>
-        <div className="checks">
-          {characters.map(c=>
-            <label key={c.id}>
+        <div className="availability-character-grid">
+          {characters.map(c=>{
+            const checked=selectedCharacters.includes(c.id);
+
+            return <label
+              key={c.id}
+              className={`availability-character ${checked?"selected":""}`}
+            >
               <input
                 type="checkbox"
-                checked={selectedCharacters.includes(c.id)}
+                checked={checked}
                 onChange={()=>toggleArray(
                   c.id,
                   selectedCharacters,
                   setSelectedCharacters,
                 )}
               />
-              {c.character_name} ({c.abbreviation})
-            </label>
-          )}
+
+              <ClassIcon
+                src={c.icon_path}
+                abbreviation={c.abbreviation}
+                name={c.character_name}
+              />
+
+              <span className="availability-character-copy">
+                <strong>{c.character_name}</strong>
+                <small>
+                  {c.abbreviation} · {shortDamage(c.damage_type)} · {shortRole(c.role)}
+                </small>
+              </span>
+            </label>;
+          })}
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import KickMemberButton from "@/components/KickMemberButton";
 import MatchInviteButton from "@/components/MatchInviteButton";
 import CompositionRestrictionToggle from "@/components/CompositionRestrictionToggle";
 import ChangeCharacter from "@/components/ChangeCharacter";
+import ClassIcon from "@/components/ClassIcon";
 import RevokeInvitationButton from "@/components/RevokeInvitationButton";
 import { archiveExpiredParties } from "@/lib/party-lifecycle";
 import {
@@ -57,6 +58,7 @@ type Mem={
   abbreviation:string|null;
   damage_type:string|null;
   role:string|null;
+  icon_path:string|null;
 };
 
 type Candidate={id:string;display:string};
@@ -150,7 +152,8 @@ export default async function PartyPage({
       c.name,
       c.abbreviation,
       c.damage_type,
-      c.role
+      c.role,
+      c.icon_path
     FROM characters ch
     JOIN classes c ON c.id=ch.class_id
     WHERE ch.user_id=$1
@@ -167,7 +170,8 @@ export default async function PartyPage({
       ch.character_name,
       c.abbreviation,
       c.damage_type,
-      c.role
+      c.role,
+      c.icon_path
     FROM party_members pm
     JOIN users u ON u.id=pm.user_id
     LEFT JOIN characters ch ON ch.id=pm.character_id
@@ -543,7 +547,11 @@ export default async function PartyPage({
         <div className="card stack" key={m.user_id}>
           <div className="row between">
             <div className="row">
-              <div className="classicon">{m.abbreviation??"?"}</div>
+              <ClassIcon
+                src={m.icon_path}
+                abbreviation={m.abbreviation??"?"}
+                name={m.character_name??undefined}
+              />
               <div>
                 <strong>{m.display}</strong>{" "}
                 <span className="muted">@{m.username}</span>

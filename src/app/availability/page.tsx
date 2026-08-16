@@ -14,6 +14,7 @@ type C={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path:string|null;
 };
 type P={
   id:string;
@@ -46,10 +47,12 @@ export default async function Availability({
       ch.character_name,
       c.abbreviation,
       c.damage_type,
-      c.role
+      c.role,
+      c.icon_path
     FROM characters ch
     JOIN classes c ON c.id=ch.class_id
     WHERE ch.user_id=$1
+      AND ch.archived_at IS NULL
     ORDER BY ch.character_name
   `,[user.id]);
 
