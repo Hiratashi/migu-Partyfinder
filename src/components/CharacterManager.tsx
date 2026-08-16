@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminConfirmDialog from "@/components/admin/AdminConfirmDialog";
+import ClassIcon from "@/components/ClassIcon";
 
 type ClassOption={
   id:string;
@@ -10,6 +11,9 @@ type ClassOption={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path?:string|null;
+  base_character?:string;
+  path_number?:number;
 };
 
 type CharacterRow={
@@ -20,6 +24,7 @@ type CharacterRow={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path?:string|null;
 };
 
 export default function CharacterManager({
@@ -96,7 +101,7 @@ export default function CharacterManager({
   if(editing) {
     return <article className="card stack character-card character-card-edit">
       <div className="row">
-        <div className="classicon">{character.abbreviation}</div>
+        <ClassIcon src={character.icon_path} abbreviation={character.abbreviation} name={character.name}/>
         <strong>Edit character</strong>
       </div>
 
@@ -116,7 +121,7 @@ export default function CharacterManager({
         <select value={classId} onChange={e=>setClassId(e.target.value)}>
           {classes.map(c=>
             <option key={c.id} value={c.id}>
-              {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
+              {c.base_character?`${c.base_character} P${c.path_number} - `:""}{c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
             </option>
           )}
         </select>
@@ -158,12 +163,12 @@ export default function CharacterManager({
   return <>
     <article className="card character-card">
       <div className="character-card-main">
-        <div className="classicon">{character.abbreviation}</div>
+        <ClassIcon src={character.icon_path} abbreviation={character.abbreviation} name={character.name}/>
 
         <div className="character-card-copy">
           <strong>{character.character_name}</strong>
           <div className="muted character-meta">
-            {character.name} - {character.damage_type} - {character.role}
+            {character.name} · {character.damage_type} · {character.role}
           </div>
         </div>
       </div>

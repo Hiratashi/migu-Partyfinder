@@ -10,6 +10,8 @@ type C={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  base_character:string;
+  path_number:number;
 };
 
 type Ch={
@@ -27,7 +29,9 @@ export default async function Profile() {
   const user=await requireUser();
 
   const classes=await query<C>(`
-    SELECT id,name,abbreviation,damage_type,role,icon_path
+    SELECT
+      id,name,abbreviation,damage_type,role,icon_path,
+      base_character,path_number
     FROM classes
     WHERE active=true
     ORDER BY sort_order,name
@@ -54,8 +58,7 @@ export default async function Profile() {
     <h1>Your characters</h1>
     <p className="muted">
       Add and manage the characters/classes you can bring to raids.
-      Removed characters are hidden here but retained internally when needed
-      for completed party history.
+      Removed characters remain internally only when needed for party history.
     </p>
 
     <CharacterForm classes={classes.rows}/>

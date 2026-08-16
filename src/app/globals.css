@@ -481,3 +481,68 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     flex:1 1 auto;
   }
 }
+
+
+/* Complete class catalogue + artwork */
+.classicon {
+  overflow:hidden;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+}
+
+.classicon img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:50% 20%;
+  display:block;
+  background:#11151d;
+}
+
+.classicon-small {
+  width:36px;
+  height:36px;
+}
+
+.classicon-normal {
+  width:46px;
+  height:46px;
+}
+
+.classicon-large {
+  width:64px;
+  height:64px;
+}
+
+.class-catalogue-grid {
+  grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+}
+
+.class-admin-group {
+  margin-top:28px;
+}
+
+.class-admin-group > h2 {
+  margin-bottom:12px;
+}
+
+
+/* Compact Elwiki class icons + symmetric admin fields */
+.classicon img {
+  object-fit:contain;
+  object-position:center;
+  padding:3px;
+}
+
+.admin-field-with-help {
+  display:grid;
+  align-content:start;
+}
+
+.field-help {
+  display:block;
+  min-height:1.35em;
+  margin-top:6px;
+  line-height:1.35;
+}
