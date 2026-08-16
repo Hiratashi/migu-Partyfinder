@@ -17,6 +17,7 @@ import {
   type WeeklySlot,
 } from "@/lib/weekly-availability";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
+import CopyCharacterName from "@/components/CopyCharacterName";
 
 type P={
   id:string;
@@ -556,7 +557,7 @@ export default async function PartyPage({
                 <strong>{m.display}</strong>{" "}
                 <span className="muted">@{m.username}</span>
                 <div className="muted">
-                  {m.character_name??"No character selected"}
+                  {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
                   {m.damage_type?` - ${m.damage_type} ${m.role}`:""}
                 </div>
               </div>

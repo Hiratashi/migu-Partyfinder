@@ -72,18 +72,6 @@ export default function AccountMenu({
         <Link href="/admin" role="menuitem">
           Admin dashboard
         </Link>
-        <Link href="/admin/audit" role="menuitem">
-          Audit log
-        </Link>
-        <Link href="/admin/raids" role="menuitem">
-          Raid administration
-        </Link>
-        <Link href="/admin/classes" role="menuitem">
-          Class administration
-        </Link>
-        <Link href="/admin/users" role="menuitem">
-          User administration
-        </Link>
       </>}
 
       <form action="/api/auth/logout" method="post">

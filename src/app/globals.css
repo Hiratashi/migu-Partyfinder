@@ -1664,3 +1664,47 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     flex-direction:column;
   }
 }
+
+
+/* Copyable in-game character name */
+.copy-character-name {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  width:max-content;
+  max-width:100%;
+  margin-top:4px;
+  padding:4px 8px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:rgba(0,0,0,.16);
+  color:var(--text);
+  cursor:pointer;
+  font:inherit;
+  text-align:left;
+}
+
+.copy-character-name:hover {
+  border-color:#647089;
+  background:rgba(255,255,255,.04);
+}
+
+.copy-character-name:focus-visible {
+  outline:2px solid currentColor;
+  outline-offset:2px;
+}
+
+.copy-character-name code {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:inherit;
+  font-size:.88rem;
+}
+
+.copy-character-name-icon {
+  flex:0 0 auto;
+  color:var(--muted);
+  font-size:.9rem;
+}
