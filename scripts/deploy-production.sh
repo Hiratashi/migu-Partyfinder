@@ -19,18 +19,16 @@ echo "Updating repository..."
 git pull --ff-only
 
 echo "Validating Docker Compose configuration..."
-docker compose config >/dev/null
+sudo docker compose config >/dev/null
 
 echo "Building and starting Partyfinder..."
-docker compose up -d --build
+sudo docker compose up -d --build
 
 echo "Waiting for application health..."
 healthy=0
 
 for _ in $(seq 1 30); do
-  if curl --fail --silent --max-time 2 \
-      http://127.0.0.1:3000/api/health \
-      | grep -q '"status":"ok"'; then
+  if curl --fail --silent --max-time 2       http://127.0.0.1:3000/api/health       | grep -q '"status":"ok"'; then
     healthy=1
     break
   fi
@@ -40,11 +38,11 @@ done
 
 if [[ "$healthy" -ne 1 ]]; then
   echo "Partyfinder did not become healthy." >&2
-  docker compose ps
+  sudo docker compose ps
   exit 1
 fi
 
 echo
-docker compose ps
+sudo docker compose ps
 echo
 echo "Partyfinder deployment completed successfully."

@@ -10,3 +10,4 @@ coverage
 backups/
 *.dump
 *.dump.sha256
+NUL
