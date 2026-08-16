@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import CharacterForm from "@/components/CharacterForm";
+import CharacterManager from "@/components/CharacterManager";
 
 type C={
   id:string;
@@ -13,6 +14,7 @@ type C={
 
 type Ch={
   id:string;
+  class_id:string;
   character_name:string;
   name:string;
   abbreviation:string;
@@ -34,6 +36,7 @@ export default async function Profile() {
   const chars=await query<Ch>(`
     SELECT
       ch.id,
+      ch.class_id,
       ch.character_name,
       c.name,
       c.abbreviation,
@@ -49,23 +52,26 @@ export default async function Profile() {
   return <main>
     <h1>Your characters</h1>
     <p className="muted">
-      Add the characters/classes you can bring to raids.
+      Add and manage the characters/classes you can bring to raids.
     </p>
 
     <CharacterForm classes={classes.rows}/>
 
     <h2 className="section-title">Characters</h2>
+
     <div className="grid">
-      {chars.rows.map(c=>
-        <div className="card row" key={c.id}>
-          <div className="classicon">{c.abbreviation}</div>
-          <div>
-            <strong>{c.character_name}</strong>
-            <div className="muted">
-              {c.name} · {c.damage_type} · {c.role}
-            </div>
-          </div>
+      {chars.rows.length===0&&
+        <div className="card muted">
+          You have not added any characters yet.
         </div>
+      }
+
+      {chars.rows.map(c=>
+        <CharacterManager
+          key={c.id}
+          character={c}
+          classes={classes.rows}
+        />
       )}
     </div>
   </main>;
