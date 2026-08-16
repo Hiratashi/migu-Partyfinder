@@ -4,16 +4,27 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+function safeReturnTo(value?:string) {
+  if (!value) return "/my-parties";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/my-parties";
+  return value;
+}
+
 export default function InvitationActions({
   partyId,
   showView=true,
+  returnTo="/my-parties",
 }:{
   partyId:string;
   showView?:boolean;
+  returnTo?:string;
 }) {
   const router=useRouter();
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
+
+  const destination=safeReturnTo(returnTo);
+  const partyHref=`/parties/${partyId}?from=${encodeURIComponent(destination)}`;
 
   async function decline() {
     if(busy)return;
@@ -28,6 +39,7 @@ export default function InvitationActions({
       const j=await r.json().catch(()=>({}));
 
       if(r.ok) {
+        router.push(destination);
         router.refresh();
         return;
       }
@@ -43,7 +55,7 @@ export default function InvitationActions({
   return <div className="stack">
     <div className="row">
       {showView&&
-        <Link className="btn primary" href={`/parties/${partyId}`}>
+        <Link className="btn primary" href={partyHref}>
           View party
         </Link>
       }

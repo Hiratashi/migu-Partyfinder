@@ -3,8 +3,10 @@ import InvitationActions from "./InvitationActions";
 
 export default function InvitationCard({
   party,
+  returnTo="/",
 }:{
   party:{id:string;leader:string;encounters:string;start:string};
+  returnTo?:string;
 }) {
   return <div className="card stack">
     <strong>Raid invitation from {party.leader}</strong>
@@ -15,6 +17,6 @@ export default function InvitationCard({
       Open the party to review the run, current members and requested
       composition before choosing a character.
     </p>
-    <InvitationActions partyId={party.id}/>
+    <InvitationActions partyId={party.id} returnTo={returnTo}/>
   </div>;
 }

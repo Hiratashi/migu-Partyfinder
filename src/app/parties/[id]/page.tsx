@@ -10,6 +10,7 @@ import MatchInviteButton from "@/components/MatchInviteButton";
 import CompositionRestrictionToggle from "@/components/CompositionRestrictionToggle";
 import ChangeCharacter from "@/components/ChangeCharacter";
 import RevokeInvitationButton from "@/components/RevokeInvitationButton";
+import InvitationActions from "@/components/InvitationActions";
 import { archiveExpiredParties } from "@/lib/party-lifecycle";
 import {
   weeklyScheduleCovers,
@@ -206,8 +207,6 @@ export default async function PartyPage({
       reason:eligible?undefined:"not currently needed",
     };
   });
-
-  const currentUserMember=members.rows.find(m=>m.user_id===user.id);
 
   const otherMembersForChange=members.rows.filter(
     m=>m.user_id!==user.id,
@@ -448,13 +447,29 @@ export default async function PartyPage({
 
       {!isMember&&["OPEN","FULL"].includes(party.status)&&
         (openSeats>0
-          ? <JoinParty
-              partyId={id}
-              characters={userCharacters}
-              invited={isInvited}
-            />
+          ? <div className="stack">
+              <JoinParty
+                partyId={id}
+                characters={userCharacters}
+                invited={isInvited}
+              />
+              {isInvited&&
+                <InvitationActions
+                  partyId={id}
+                  showView={false}
+                />
+              }
+            </div>
           : <div className="card muted">
               This party is currently full.
+              {isInvited&&
+                <div style={{marginTop:12}}>
+                  <InvitationActions
+                    partyId={id}
+                    showView={false}
+                  />
+                </div>
+              }
             </div>
         )
       }
