@@ -1,93 +1,127 @@
 # Migu's Partyfinder Tool
 
-A guild-only Elsword raid party finder. The MVP targets **Doom Aporia (21-1 / 21-2 / 21-3)** and is intentionally structured so additional raids, classes, invitation workflows and Discord notifications can be added without replacing the core architecture.
+A community-built, guild-only raid party finder for **Elsword**. The current implementation focuses on **Doom Aporia**, with the data model designed so additional raids and party sizes can be added later.
 
-## Included in this starter
+> This is an unofficial fan/community project. It is not affiliated with, endorsed by, or operated by KOG Games or any game/server operator. Game names and related trademarks belong to their respective owners.
+
+## Current features
 
 - Discord OAuth login; no local passwords.
 - Guild membership verification at login.
 - Optional required Discord role.
-- Secure random, database-backed sessions stored as SHA-256 hashes; Discord access tokens are discarded after login.
-- Doom Aporia party creation with encounter selection, difficulty stage, clear/practice mode, specific time or time range, and requested Physical/Magical/Support slots.
-- Browser-local time display while all timestamps are stored as PostgreSQL `timestamptz`/UTC.
-- Character profiles with data-driven class definitions.
-- Party joining with a selected character.
+- Secure random, database-backed application sessions; Discord access tokens are discarded after login.
+- Open party browser with creator Discord username.
+- A dedicated **My Parties** view for parties created by the current user.
+- Doom Aporia encounters 21-1 through 21-5 with Full Run selection.
+- Difficulty stages 1-3.
+- Clear groups and multi-fight practice groups.
+- Configurable raid party size (Doom currently uses 6).
+- Physical / Magical / Support party needs.
+- Party lifecycle: open/full, edit, leave, kick, complete, cancel, and history/archive.
+- Persistent weekly availability profile with 30-minute blocks for all seven days.
+- Availability preferences for encounters, characters, stages, practice groups, timezone, and notes.
+- Party-to-player matching based on weekly schedule, encounters, difficulty, practice preference and eligible characters.
+- Invitations and invitation acceptance.
 - PostgreSQL migrations and seed data.
-- Docker Compose deployment with an internal-only database network, non-root app container, dropped Linux capabilities, and no-new-privileges.
-- Baseline HTTP security headers / CSP and same-origin checks on state-changing browser API calls.
-- Basic leader-to-user invitation flow for guild members who have logged into the app.
-- Audit-log table ready for privileged actions.
+- Docker Compose deployment.
+- Baseline security headers, same-origin checks for write requests, non-root application container, dropped Linux capabilities, and audit-log support.
 
 ## Architecture
 
 ```text
 Browser
   |
-  | HTTPS (production: Cloudflare / reverse proxy)
+  | HTTPS in production
   v
-Next.js 16 / TypeScript
+Next.js / TypeScript
   |        \
   |         \--> Discord OAuth / Discord API
   v
-PostgreSQL 17
+PostgreSQL
 ```
 
-This is a modular monolith on purpose. For a guild-sized application, splitting the frontend, API, authentication and bot into microservices adds operational complexity without a useful benefit. A Discord bot can later be another container that uses the same database/API.
+The application is intentionally a modular monolith. For a guild-sized service this keeps deployment and maintenance much simpler than splitting the frontend, API and authentication into separate services. A Discord notification bot can be added later as another container.
 
-## 1. Discord application
+## Discord application
 
-Create an application in the Discord Developer Portal.
+Create an application in the Discord Developer Portal and configure an OAuth2 redirect URI.
 
-Under **OAuth2**, create this redirect URI for local development:
+Local development:
 
 ```text
 http://localhost:3000/api/auth/callback
 ```
 
-For production, add your real HTTPS URL, e.g.:
+Production example:
 
 ```text
 https://partyfinder.example.com/api/auth/callback
 ```
 
-The site requests only `identify guilds`. It retrieves the user's identity and guild list, verifies `DISCORD_GUILD_ID`, then discards the OAuth access token.
+The application requests the Discord scopes required for identity and guild membership verification. `DISCORD_GUILD_ID` limits access to the configured guild. `DISCORD_REQUIRED_ROLE_ID` can optionally restrict access further.
 
-If `DISCORD_REQUIRED_ROLE_ID` is configured, the application also checks the current user's member object for that role during login.
+## Configuration
 
-## 2. Configure environment
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
+```
+
+Generate a strong application secret:
+
+```bash
 openssl rand -hex 32
 ```
 
-Put the generated value in `APP_SECRET`, then configure:
+Configure at least:
 
 ```dotenv
 APP_URL=http://localhost:3000
-DISCORD_CLIENT_ID=...
-DISCORD_CLIENT_SECRET=...
-DISCORD_GUILD_ID=...
+DATABASE_URL=postgresql://partyfinder:change-me@db:5432/partyfinder
+POSTGRES_DB=partyfinder
+POSTGRES_USER=partyfinder
+POSTGRES_PASSWORD=change-me
+
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_GUILD_ID=
 DISCORD_REQUIRED_ROLE_ID=
+
+APP_SECRET=
 SECURE_COOKIES=false
 ```
 
-Also replace the example PostgreSQL password in `.env`.
+Never commit `.env` or real secrets.
 
-Do **not** commit `.env`.
+## Docker
 
-## 3. Start with Docker
+Start the application with:
 
 ```bash
 docker compose up --build
 ```
 
-The `migrate` service applies SQL migrations and seed data before the application starts.
+The migration container applies pending SQL migrations and seed data before the application starts.
 
-Open:
+Local URL:
 
 ```text
 http://localhost:3000
+```
+
+## Updating after pulling changes
+
+When an update contains database migrations:
+
+```bash
+docker compose run --rm migrate
+```
+
+Then rebuild/restart:
+
+```bash
+docker compose up -d --build
 ```
 
 ## Production deployment
@@ -97,110 +131,64 @@ Recommended topology:
 ```text
 Internet
    |
-Cloudflare DNS/WAF/TLS
+Cloudflare / firewall / TLS
    |
 Reverse proxy (Caddy, Traefik or nginx)
    |
-127.0.0.1:3000 -> Migu Partyfinder container
+127.0.0.1:3000 -> Partyfinder
    |
 private Docker network -> PostgreSQL
 ```
 
-The compose file intentionally binds Next.js to `127.0.0.1:3000`, not every interface. Put a TLS reverse proxy in front of it.
-
-Production `.env` changes:
+For production:
 
 ```dotenv
 APP_URL=https://partyfinder.example.com
 SECURE_COOKIES=true
 ```
 
-Never expose PostgreSQL port 5432 publicly.
+Do not expose PostgreSQL directly to the Internet.
 
-### Reverse-proxy requirements
+### Security checklist
 
-- TLS/HTTPS only.
-- Forward the original host/protocol correctly.
-- Set a reasonable request-body size.
-- Add edge rate limiting for `/api/auth/*` and write endpoints.
-- If using Cloudflare, keep the origin firewall restricted where practical.
+- Use HTTPS only in production.
+- Keep Node.js, Next.js, PostgreSQL and npm dependencies patched.
+- Use strong independent secrets.
+- Add edge/reverse-proxy rate limiting for authentication and write endpoints.
+- Back up PostgreSQL and periodically test restores.
+- Do not expose the Docker socket or management dashboards publicly.
+- Keep authorization checks on every write/admin operation; hiding UI buttons is not authorization.
+- Review CSP hardening before a higher-risk public deployment.
 
-## Database / adding classes
+## Data-driven raids and classes
 
-Classes are database data, not frontend conditionals. The starter seeds only three examples:
+Raids, encounters and classes are database data rather than hard-coded UI branches. Doom Aporia currently has a party size of 6. A future raid can use a different `party_size`, and the party-needs selectors will use that value.
 
-- Shakti / SH / PHYSICAL / DPS
-- Code Sariel / CS / MAGICAL / DPS
-- Radiant Soul / RaS / MAGICAL / SUPPORT
+Character/class icons can be stored in `public/class-icons/` and referenced through the class data.
 
-Add the complete Elrios Rift class catalogue to `scripts/seed.mjs`, then rerun:
+## Availability model
 
-```bash
-docker compose run --rm migrate
-```
+Each user has one persistent weekly availability profile per raid. The profile contains:
 
-Icons can be added to `public/class-icons/` and referenced through the `classes.icon_path` column.
+- 30-minute availability blocks for Monday-Sunday
+- timezone
+- encounters they are willing to run
+- eligible characters
+- accepted difficulty stages
+- whether practice groups are acceptable
+- an optional note
 
-## Adding another raid
+The matcher compares a party's actual absolute start/end time against each player's recurring weekly schedule in that player's saved timezone.
 
-A raid is represented by `raids` + `encounters`. Party logic references IDs rather than hard-coded `21-1`, `21-2`, `21-3` values. The current create page intentionally selects Doom Aporia, but the database/API design is already multi-raid capable.
+## Planned additions
 
-The next refactor would replace the Doom-specific create page with `/raids/[raid]/parties/new` and load raid metadata dynamically.
-
-## Security notes
-
-This starter provides a sound baseline, not a claim of invulnerability. Before exposing it publicly:
-
-1. Put it behind HTTPS and set `SECURE_COOKIES=true`.
-2. Use long independent secrets and rotate leaked secrets immediately.
-3. Keep Node, Next.js, PostgreSQL and npm dependencies patched.
-4. Add reverse-proxy/Cloudflare rate limiting.
-5. Back up PostgreSQL and test restores.
-6. Add centralized application/container logs and alerting.
-7. Add automated tests before expanding write/admin functionality.
-8. Add authorization checks for every future edit/delete/invite/admin endpoint; hiding a button is never authorization.
-9. Consider re-checking guild membership periodically or on sensitive actions if immediate revocation is important.
-10. Do not expose Docker socket, database, or management dashboards to the public Internet.
-
-## Current MVP limitations / next backlog
-
-- Invitation workflow is included for users who have logged into the site at least once; Discord-wide user discovery is deferred to the bot phase.
-- Availability/search entries independent of a created party.
-- Discord bot reminders and Discord mentions.
+- Invitation decline/expiry and leader-side revoke controls.
+- Better party composition visualization.
+- Discord bot reminders and mentions.
 - Ready checks.
-- Leave/kick/edit/cancel party controls.
-- Full Elrios Rift class catalogue and official/approved class icons.
 - Admin UI for raids/classes.
-- Persistent distributed rate limiting (Redis is unnecessary until you actually run multiple app replicas; edge rate limiting is enough for the initial deployment).
-- Unit/E2E test suite.
-
-## Suggested next implementation order
-
-1. Fill the actual class catalogue and icons.
-2. Add party leader edit/cancel + user leave operations.
-3. Add player availability (`availability` table) and matching.
-4. Add invitation decline/expiry and leader-side revoke controls.
-5. Add Discord bot container for invitation + upcoming-raid notifications.
-6. Add admin UI for raids/classes and remove the remaining Doom-specific page assumptions.
-
-## Local development without the app container
-
-Run PostgreSQL with Docker, then run Next.js on your machine:
-
-```bash
-docker compose up db
-npm install
-npm run db:migrate
-npm run db:seed
-npm run dev
-```
-
-For this mode, set `DATABASE_URL` to use `localhost` instead of Docker hostname `db`.
+- Automated tests and CI.
 
 ## License
 
-Private guild project. Add the license you want before publishing publicly.
-
-### CSP note
-
-The starter CSP currently allows inline scripts because Next.js hydration requires either inline script allowance or a nonce-based CSP integration. Before a higher-risk/public deployment, migrate to the documented nonce-based CSP pattern rather than assuming this baseline policy is the final hardening state.
+Add the license you want to use before redistributing the project under a specific open-source license.

@@ -1,0 +1,11 @@
+import Link from "next/link";
+import { requireUser } from "@/lib/auth";
+import { query } from "@/lib/db";
+import LocalDateTime from "@/components/LocalDateTime";
+import { archiveExpiredParties } from "@/lib/party-lifecycle";
+type PartyRow={id:string;title:string|null;start_time:Date;end_time:Date|null;difficulty_stage:number;is_practice:boolean;encounters:string;members:number;party_size:number;need_physical:number;need_magical:number;need_support:number;status:string};
+export default async function MyParties(){
+  const user=await requireUser();await archiveExpiredParties();
+  const parties=await query<PartyRow>(`SELECT p.id,p.title,p.start_time,p.end_time,p.difficulty_stage,p.is_practice,p.status,r.party_size,string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,count(DISTINCT pm.user_id)::int members,p.need_physical,p.need_magical,p.need_support FROM parties p JOIN raids r ON r.id=p.raid_id JOIN party_encounters pe ON pe.party_id=p.id JOIN encounters e ON e.id=pe.encounter_id LEFT JOIN party_members pm ON pm.party_id=p.id AND pm.status='ACCEPTED' WHERE p.leader_id=$1 AND p.status IN ('OPEN','FULL') GROUP BY p.id,r.party_size ORDER BY p.start_time ASC`,[user.id]);
+  return <main><div className="row between"><div><h1>My parties</h1><p className="muted">Open parties you created. Completed and cancelled parties are available under History.</p></div><Link className="btn primary" href="/parties/new">+ Create Party</Link></div><div className="grid">{parties.rows.length===0&&<div className="card muted">You do not currently have any open parties.</div>}{parties.rows.map(p=><article className="card stack" key={p.id}><div className="row between"><strong>{p.title||"Doom Aporia"}</strong><span className="pill">{p.status}</span></div><span>{p.encounters} · Stage {p.difficulty_stage} · {p.is_practice?"Practice":"Clear"}</span><div><LocalDateTime iso={new Date(p.start_time).toISOString()}/>{p.end_time&&<> → <LocalDateTime iso={new Date(p.end_time).toISOString()} timeOnly/></>}</div><div className="row"><span className="pill">{p.members}/{p.party_size} joined</span><span className="need">Needs {p.need_physical} P · {p.need_magical} M · {p.need_support} S</span></div><Link className="btn" href={`/parties/${p.id}`}>Manage party</Link></article>)}</div></main>;
+}

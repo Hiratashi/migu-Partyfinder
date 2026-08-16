@@ -30,3 +30,23 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
 .weekly-cell:hover { border-color:var(--accent); }
 .weekly-cell.selected { background:var(--accent); border-color:var(--accent); }
 @media(max-width:600px){.weekly-grid{min-width:940px}.need-grid{grid-template-columns:1fr}}
+
+
+
+/* Navigation visibility + weekly schedule fit */
+.brand-home { display:grid; gap:1px; font-size:1.22rem; line-height:1.05; }
+.brand-home small { font-size:.67rem; font-weight:600; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+
+/* Fit all 48 half-hour blocks inside normal desktop cards. */
+.weekly-scroll { overflow-x:hidden; padding-bottom:0; }
+.weekly-grid { width:100%; min-width:0; grid-template-columns:72px repeat(48,minmax(0,1fr)); gap:2px; }
+.weekly-cell { width:100%; min-width:0; }
+.weekly-time { font-size:.62rem; }
+
+@media(max-width:760px){
+  .weekly-scroll { overflow-x:auto; padding-bottom:8px; }
+  .weekly-grid { min-width:860px; grid-template-columns:72px repeat(48,14px); }
+  .weekly-cell { width:14px; }
+  .brand-home { font-size:1.05rem; }
+}
+
