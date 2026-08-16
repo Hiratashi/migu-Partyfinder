@@ -13,7 +13,9 @@ export const partySchema = z.object({
   needSupport: z.number().int().min(0).max(12),
   compositionRestricted: z.boolean().default(true)
 }).superRefine((v, ctx) => {
-  if (v.endTime && new Date(v.endTime) <= new Date(v.startTime)) ctx.addIssue({ code: "custom", message: "End time must be after start time", path: ["endTime"] });
+  const start = new Date(v.startTime);
+  if (start.getTime() <= Date.now() - 5_000) ctx.addIssue({ code: "custom", message: "Party start time must be in the future", path: ["startTime"] });
+  if (v.endTime && new Date(v.endTime) <= start) ctx.addIssue({ code: "custom", message: "End time must be after start time", path: ["endTime"] });
   if (v.isPractice && v.practiceEncounterIds.length === 0) ctx.addIssue({ code: "custom", message: "Choose at least one fight to practice", path: ["practiceEncounterIds"] });
   if (v.practiceEncounterIds.some(id => !v.encounters.includes(id))) ctx.addIssue({ code: "custom", message: "Practice fights must be part of the selected run", path: ["practiceEncounterIds"] });
 });
