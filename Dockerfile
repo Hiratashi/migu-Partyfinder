@@ -19,6 +19,10 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
 
+# Some deployments have no static assets yet. The runner stage still copies
+# /app/public, so ensure the directory always exists.
+RUN mkdir -p /app/public
+
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
