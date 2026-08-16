@@ -1,23 +1,34 @@
 "use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
 
-export default function AccountMenu({displayName,username}:{displayName:string;username:string}){
+export default function AccountMenu({user}:{user:{username:string;display_name:string|null}}){
   const pathname=usePathname();
-  const detailsRef=useRef<HTMLDetailsElement>(null);
+  const [open,setOpen]=useState(false);
+  const ref=useRef<HTMLDivElement>(null);
 
-  useEffect(()=>{detailsRef.current?.removeAttribute("open");},[pathname]);
+  useEffect(()=>setOpen(false),[pathname]);
 
-  function close(){detailsRef.current?.removeAttribute("open");}
+  useEffect(()=>{
+    function onPointer(e:PointerEvent){
+      if(open && ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    window.addEventListener("pointerdown",onPointer);
+    return ()=>window.removeEventListener("pointerdown",onPointer);
+  },[open]);
 
-  return <details ref={detailsRef} className="account-menu">
-    <summary className="btn">Account</summary>
-    <div className="account-menu-panel">
-      <div className="account-menu-user"><strong>{displayName}</strong><span>@{username}</span></div>
-      <Link href="/availability" onClick={close}>Availability</Link>
-      <Link href="/profile" onClick={close}>Profile & characters</Link>
+  return <div className="account-menu" ref={ref}>
+    <button type="button" className="btn" aria-expanded={open} onClick={()=>setOpen(v=>!v)}>Account</button>
+    {open&&<div className="account-popover">
+      <div className="account-identity">
+        <strong>{user.display_name??user.username}</strong>
+        <span>@{user.username}</span>
+      </div>
+      <Link href="/availability">Availability</Link>
+      <Link href="/profile">Profile & characters</Link>
       <form action="/api/auth/logout" method="post"><button type="submit">Logout</button></form>
-    </div>
-  </details>;
+    </div>}
+  </div>;
 }
