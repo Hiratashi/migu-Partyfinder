@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { query } from "@/lib/db";
+import AdminSectionToolbar from "@/components/admin/AdminSectionToolbar";
 
 type Raid={
   id:string;
@@ -36,19 +37,16 @@ export default async function AdminRaidsPage() {
     ORDER BY r.sort_order,r.name
   `);
 
-  return <main>
-    <div className="row between">
-      <div>
+  return <main className="admin-page">
+    <div>
         <div className="eyebrow">Administration</div>
         <h1>Raids</h1>
         <p className="muted">
           Configure the raids used by party creation and availability.
         </p>
       </div>
-      <Link className="btn primary" href="/admin/raids/new">
-        + Add raid
-      </Link>
-    </div>
+
+    <AdminSectionToolbar current="raids" actionHref="/admin/raids/new" actionLabel="+ Add raid"/>
 
     <div className="grid">
       {raids.rows.map(raid=>

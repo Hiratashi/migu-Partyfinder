@@ -69,6 +69,12 @@ export default function AccountMenu({
 
       {user.is_admin&&<>
         <div className="account-menu-divider"/>
+        <Link href="/admin" role="menuitem">
+          Admin dashboard
+        </Link>
+        <Link href="/admin/audit" role="menuitem">
+          Audit log
+        </Link>
         <Link href="/admin/raids" role="menuitem">
           Raid administration
         </Link>

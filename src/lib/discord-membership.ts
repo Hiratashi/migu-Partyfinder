@@ -1,4 +1,5 @@
 import { db, query } from "@/lib/db";
+import { writeAudit } from "@/lib/audit";
 import {
   getStoredDiscordTokens,
   refreshDiscordOAuthToken,
@@ -160,20 +161,15 @@ export async function suspendUserForGuildDeparture(
     `,[userId]);
 
     for(const party of cancelled.rows) {
-      await client.query(`
-        INSERT INTO audit_log(
-          user_id,action,entity_type,entity_id,metadata
-        )
-        VALUES(
-          $1,
-          'PARTY_AUTO_CANCEL_GUILD_LEAVE',
-          'party',
-          $2,
-          jsonb_build_object(
-            'reason','Leader left Discord guild'
-          )
-        )
-      `,[userId,party.id]);
+      await writeAudit({
+        userId,
+        action:"PARTY_AUTO_CANCEL_GUILD_LEAVE",
+        entityType:"party",
+        entityId:party.id,
+        metadata:{
+          reason:"Leader left Discord guild",
+        },
+      },client);
     }
 
     // Remove accepted memberships from somebody else's future active party.
@@ -201,21 +197,16 @@ export async function suspendUserForGuildDeparture(
       `,[partyIds]);
 
       for(const partyId of partyIds) {
-        await client.query(`
-          INSERT INTO audit_log(
-            user_id,action,entity_type,entity_id,metadata
-          )
-          VALUES(
-            $1,
-            'PARTY_MEMBER_AUTO_REMOVE_GUILD_LEAVE',
-            'party',
-            $2,
-            jsonb_build_object(
-              'removed_user_id',$1::text,
-              'reason','Member left Discord guild'
-            )
-          )
-        `,[userId,partyId]);
+        await writeAudit({
+          userId,
+          action:"PARTY_MEMBER_AUTO_REMOVE_GUILD_LEAVE",
+          entityType:"party",
+          entityId:partyId,
+          metadata:{
+            removed_user_id:userId,
+            reason:"Member left Discord guild",
+          },
+        },client);
       }
     }
 
@@ -240,6 +231,19 @@ export async function suspendUserForGuildDeparture(
         updated_at=now()
       WHERE id=$1
     `,[userId]);
+
+    await writeAudit({
+      userId,
+      action:"USER_AUTO_SUSPEND_GUILD_LEAVE",
+      entityType:"user",
+      entityId:userId,
+      metadata:{
+        reason:"User is no longer a member of the configured Discord guild",
+        sessions_revoked:true,
+        parties_cancelled:cancelled.rowCount??0,
+        party_memberships_removed:accepted.rowCount??0,
+      },
+    },client);
 
     // Revocation is part of the same transaction as party cleanup.
     await client.query(

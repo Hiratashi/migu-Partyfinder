@@ -10,6 +10,7 @@ import { storeDiscordOAuthTokens } from "@/lib/discord-token-store";
 import { query } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 import { timingSafeEqual } from "@/lib/crypto";
+import { writeAudit } from "@/lib/audit";
 
 export async function GET(req:NextRequest) {
   const url=new URL(req.url);
@@ -115,6 +116,15 @@ export async function GET(req:NextRequest) {
           updated_at=now()
         WHERE id=$1
       `,[user.id]);
+      await writeAudit({
+        userId:user.id,
+        action:"USER_AUTO_RESTORE_GUILD_REJOIN",
+        entityType:"user",
+        entityId:user.id,
+        metadata:{
+          reason:"Discord guild membership verified again",
+        },
+      });
     } else if(user.access_disabled) {
       return NextResponse.redirect(
         `${process.env.APP_URL}/login?error=access_disabled`,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { query } from "@/lib/db";
 import ClassIcon from "@/components/ClassIcon";
+import AdminSectionToolbar from "@/components/admin/AdminSectionToolbar";
 
 type C={
   id:string;
@@ -38,9 +39,8 @@ export default async function AdminClassesPage() {
     groups.set(key,[...(groups.get(key)??[]),c]);
   }
 
-  return <main>
-    <div className="row between">
-      <div>
+  return <main className="admin-page">
+    <div>
         <div className="eyebrow">Administration</div>
         <h1>Classes</h1>
         <p className="muted">
@@ -48,8 +48,8 @@ export default async function AdminClassesPage() {
           defaults and can be adjusted when balance/meta changes.
         </p>
       </div>
-      <Link className="btn primary" href="/admin/classes/new">+ Add class</Link>
-    </div>
+
+    <AdminSectionToolbar current="classes" actionHref="/admin/classes/new" actionLabel="+ Add class"/>
 
     {[...groups.entries()].map(([base,items])=>
       <section key={base} className="class-admin-group">

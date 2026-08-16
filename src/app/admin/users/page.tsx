@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { query } from "@/lib/db";
+import AdminSectionToolbar from "@/components/admin/AdminSectionToolbar";
+import UserFilters from "@/components/admin/UserFilters";
 
 type U={
   id:string;
@@ -87,7 +89,7 @@ export default async function AdminUsersPage({
 
   const c=counts.rows[0];
 
-  return <main>
+  return <main className="admin-page">
     <div>
       <div className="eyebrow">Administration</div>
       <h1>Users</h1>
@@ -95,6 +97,8 @@ export default async function AdminUsersPage({
         Manage Partyfinder access and administrator permissions.
       </p>
     </div>
+
+    <AdminSectionToolbar current="users"/>
 
     <div className="admin-user-stats">
       <div className="card">
@@ -110,35 +114,7 @@ export default async function AdminUsersPage({
         <strong>{c.disabled}</strong>
       </div>
     </div>
-
-    <form className="card admin-user-filters" method="get">
-      <label>
-        Search
-        <input
-          name="q"
-          defaultValue={search}
-          placeholder="Discord name or username"
-        />
-      </label>
-
-      <label>
-        Status
-        <select name="status" defaultValue={status}>
-          <option value="all">All users</option>
-          <option value="enabled">Enabled</option>
-          <option value="disabled">Disabled</option>
-          <option value="admins">Admins</option>
-        </select>
-      </label>
-
-      <button className="btn" type="submit">Filter</button>
-
-      {(search||status!=="all")&&
-        <Link className="btn" href="/admin/users">
-          Clear
-        </Link>
-      }
-    </form>
+    <UserFilters q={search} status={status}/>
 
     <div className="admin-user-list">
       {users.rows.map(u=>
