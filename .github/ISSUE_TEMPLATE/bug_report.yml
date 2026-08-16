@@ -1,0 +1,86 @@
+name: "🐛 Bug report"
+description: "Report something that is not working as expected"
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping test Migu's Partyfinder Tool.
+
+        Please do not include passwords, tokens, cookies, `.env` contents or other secrets.
+
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+      description: Describe the problem as clearly as you can.
+      placeholder: Tell us what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: What should have happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the steps that trigger the issue.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Select ...
+        4. See error ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area is affected?
+      options:
+        - Login / Discord authentication
+        - Profile / Characters
+        - Availability
+        - Party browser
+        - Create / Edit Party
+        - Join / Leave Party
+        - Invitations
+        - My Parties
+        - History
+        - Admin
+        - Time / Timezone
+        - Mobile / Responsive UI
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      description: Example: Chrome 151 on Windows 11, Safari on iPhone.
+      placeholder: Chrome 151 / Windows 11
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot or additional context
+      description: You can drag screenshots into this box. Remove any sensitive information first.
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive information
+      options:
+        - label: I have checked that this report does not contain passwords, tokens, cookies, `.env` contents or private keys.
+          required: true
