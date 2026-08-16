@@ -5,7 +5,13 @@ await db.connect();
 try {
   const raid = await db.query(`INSERT INTO raids(slug,name) VALUES('doom-aporia','Doom Aporia') ON CONFLICT(slug) DO UPDATE SET name=EXCLUDED.name RETURNING id`);
   const raidId = raid.rows[0].id;
-  for (const [code, name, order] of [['21-1','Doom Aporia 21-1',1],['21-2','Doom Aporia 21-2',2],['21-3','Doom Aporia 21-3',3]]) {
+  for (const [code, name, order] of [
+    ['21-1','Doom Aporia 21-1',1],
+    ['21-2','Doom Aporia 21-2',2],
+    ['21-3','Doom Aporia 21-3',3],
+    ['21-4','Doom Aporia 21-4',4],
+    ['21-5','Doom Aporia 21-5',5]
+  ]) {
     await db.query('INSERT INTO encounters(raid_id,code,name,sort_order) VALUES($1,$2,$3,$4) ON CONFLICT(raid_id,code) DO UPDATE SET name=EXCLUDED.name, sort_order=EXCLUDED.sort_order', [raidId,code,name,order]);
   }
   const classes = [
