@@ -316,3 +316,15 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
   .party-card-head { flex-direction:column; }
   .party-summary-grid { grid-template-columns:1fr; }
 }
+
+
+/* Integrated UX pass */
+.invitation-inline-actions {
+  margin-top: -4px;
+}
+
+@media (max-width: 520px) {
+  .party-card .party-card-action {
+    min-height: 44px;
+  }
+}
