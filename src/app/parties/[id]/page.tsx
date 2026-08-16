@@ -10,7 +10,6 @@ import MatchInviteButton from "@/components/MatchInviteButton";
 import CompositionRestrictionToggle from "@/components/CompositionRestrictionToggle";
 import ChangeCharacter from "@/components/ChangeCharacter";
 import RevokeInvitationButton from "@/components/RevokeInvitationButton";
-import InvitationActions from "@/components/InvitationActions";
 import { archiveExpiredParties } from "@/lib/party-lifecycle";
 import {
   weeklyScheduleCovers,
@@ -21,6 +20,7 @@ import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 type P={
   id:string;
   title:string|null;
+  raid_name:string;
   start_time:Date;
   end_time:Date|null;
   difficulty_stage:number;
@@ -110,7 +110,7 @@ export default async function PartyPage({
       p.raid_id,
       p.status,
       p.composition_restricted,
-      r.party_size,
+      r.name raid_name,r.party_size,
       COALESCE(u.display_name,u.username) leader,
       u.username leader_username,
       string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
@@ -129,7 +129,7 @@ export default async function PartyPage({
     JOIN party_encounters pe ON pe.party_id=p.id
     JOIN encounters e ON e.id=pe.encounter_id
     WHERE p.id=$1
-    GROUP BY p.id,r.party_size,u.display_name,u.username
+    GROUP BY p.id,r.name,r.party_size,u.display_name,u.username
   `,[id]);
 
   if(!p.rowCount)notFound();
@@ -207,6 +207,8 @@ export default async function PartyPage({
       reason:eligible?undefined:"not currently needed",
     };
   });
+
+  const currentUserMember=members.rows.find(m=>m.user_id===user.id);
 
   const otherMembersForChange=members.rows.filter(
     m=>m.user_id!==user.id,
@@ -373,7 +375,7 @@ export default async function PartyPage({
     <div className="card stack">
       <div className="row between">
         <div>
-          <div className="muted">DOOM APORIA</div>
+          <div className="muted">{party.raid_name}</div>
           <h1>{party.title||party.encounters}</h1>
           <div className="muted">
             Created by <strong>@{party.leader_username}</strong>
@@ -447,29 +449,13 @@ export default async function PartyPage({
 
       {!isMember&&["OPEN","FULL"].includes(party.status)&&
         (openSeats>0
-          ? <div className="stack">
-              <JoinParty
-                partyId={id}
-                characters={userCharacters}
-                invited={isInvited}
-              />
-              {isInvited&&
-                <InvitationActions
-                  partyId={id}
-                  showView={false}
-                />
-              }
-            </div>
+          ? <JoinParty
+              partyId={id}
+              characters={userCharacters}
+              invited={isInvited}
+            />
           : <div className="card muted">
               This party is currently full.
-              {isInvited&&
-                <div style={{marginTop:12}}>
-                  <InvitationActions
-                    partyId={id}
-                    showView={false}
-                  />
-                </div>
-              }
             </div>
         )
       }

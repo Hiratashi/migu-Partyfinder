@@ -1,3 +1,4 @@
-import { requireUser } from "@/lib/auth";import { query } from "@/lib/db";import NewPartyForm from "@/components/NewPartyForm";
-type E={id:string;code:string;name:string}; type R={party_size:number};
-export default async function NewParty(){await requireUser();const e=await query<E>(`SELECT e.id,e.code,e.name FROM encounters e JOIN raids r ON r.id=e.raid_id WHERE r.slug='doom-aporia' ORDER BY e.sort_order`);const r=await query<R>("SELECT party_size FROM raids WHERE slug='doom-aporia' LIMIT 1");return <main><h1>Create Doom Aporia party</h1><p className="muted">Full Run is selected by default. Party requirements are capped by this raid's configured party size.</p><NewPartyForm encounters={e.rows} partySize={r.rows[0]?.party_size??6}/></main>}
+import { redirect } from "next/navigation";
+export default function LegacyNewParty() {
+  redirect("/raids");
+}

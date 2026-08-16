@@ -328,3 +328,9 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     min-height: 44px;
   }
 }
+
+
+/* Data-driven raid chooser */
+.raid-tabs {
+  margin: 0 0 18px;
+}

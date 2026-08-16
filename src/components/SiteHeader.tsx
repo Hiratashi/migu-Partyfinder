@@ -34,7 +34,10 @@ export default function SiteHeader({
       >
         History
       </Link>
-      <Link className="btn primary" href="/parties/new">
+      <Link
+        className={`btn primary ${pathname.startsWith("/raids")?"active-nav":""}`}
+        href="/raids"
+      >
         + Create Party
       </Link>
       <AccountMenu user={user}/>

@@ -75,14 +75,17 @@ export default async function Home() {
       string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
       count(DISTINCT pm.user_id)::int members,
       count(DISTINCT pm.user_id)
-        FILTER (WHERE c.damage_type='PHYSICAL' AND c.role IN ('DPS','FLEX'))::int
-        assigned_physical,
+        FILTER (
+          WHERE c.damage_type='PHYSICAL'
+            AND c.role IN ('DPS','FLEX')
+        )::int assigned_physical,
       count(DISTINCT pm.user_id)
-        FILTER (WHERE c.damage_type='MAGICAL' AND c.role IN ('DPS','FLEX'))::int
-        assigned_magical,
+        FILTER (
+          WHERE c.damage_type='MAGICAL'
+            AND c.role IN ('DPS','FLEX')
+        )::int assigned_magical,
       count(DISTINCT pm.user_id)
-        FILTER (WHERE c.role='SUPPORT')::int
-        assigned_support
+        FILTER (WHERE c.role='SUPPORT')::int assigned_support
     FROM parties p
     JOIN raids r ON r.id=p.raid_id
     JOIN users u ON u.id=p.leader_id
@@ -100,15 +103,14 @@ export default async function Home() {
 
   return <main>
     <section className="hero">
-      <p className="muted">DOOM APORIA • GUILD ONLY</p>
+      <p className="muted">RAID PARTY FINDER • GUILD ONLY</p>
       <h1>Find the raid.<br/>Not the timezone.</h1>
       <p>
-        Welcome {user.display_name??user.username}. Browse all open parties,
-        publish your availability, or create a party and let the matcher find
-        compatible guild members.
+        Welcome {user.display_name??user.username}. Browse open parties,
+        publish your availability, or create a group for any configured raid.
       </p>
       <div className="row">
-        <Link className="btn primary" href="/parties/new">Create Doom party</Link>
+        <Link className="btn primary" href="/raids">Create party</Link>
         <Link className="btn" href="/availability">Set availability</Link>
         <Link className="btn" href="/my-parties">My parties</Link>
       </div>
@@ -126,6 +128,7 @@ export default async function Home() {
               encounters:i.encounters,
               start:new Date(i.start_time).toISOString(),
             }}
+            returnTo="/"
           />
         )}
       </div>
