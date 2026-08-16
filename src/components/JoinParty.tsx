@@ -1,0 +1,5 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+type Char={id:string;character_name:string;name:string;abbreviation:string;damage_type:string;role:string};
+export default function JoinParty({partyId,characters}:{partyId:string;characters:Char[]}){const router=useRouter();const [characterId,setCharacterId]=useState(characters[0]?.id??"");const [msg,setMsg]=useState("");async function join(){setMsg("Joining…");const r=await fetch(`/api/parties/${partyId}/join`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({characterId:characterId||null})});setMsg(r.ok?"Joined!":"Could not join.");if(r.ok)router.refresh()}return <div className="row"><select value={characterId} onChange={e=>setCharacterId(e.target.value)} style={{padding:10,borderRadius:10,background:"#10131a",color:"white"}}><option value="">Join without character</option>{characters.map(c=><option key={c.id} value={c.id}>{c.character_name} — {c.abbreviation} ({c.damage_type} {c.role})</option>)}</select><button className="btn primary" onClick={join}>Join party</button><span className="muted">{msg}</span></div>}
