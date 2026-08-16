@@ -72,7 +72,7 @@ export default async function AdminRaidsPage() {
           </div>
 
           <div className="muted">
-            Default Stage {raid.default_stage} · Order {raid.sort_order} ·{" "}
+            Default Stage {raid.default_stage} - Order {raid.sort_order}  - {" "}
             {raid.practice_supported?"Practice enabled":"No practice groups"}
           </div>
 

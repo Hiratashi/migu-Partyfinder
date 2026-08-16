@@ -82,8 +82,8 @@ export default function PartyCard({
     <div className="party-needs">
       <span>Still wanted</span>
       <strong>
-        {party.remainingPhysical} Physical ·{" "}
-        {party.remainingMagical} Magical ·{" "}
+        {party.remainingPhysical} Physical  - {" "}
+        {party.remainingMagical} Magical  - {" "}
         {party.remainingSupport} Support
       </strong>
       {typeof party.compositionRestricted==="boolean"&&

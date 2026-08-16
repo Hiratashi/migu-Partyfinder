@@ -46,6 +46,7 @@ export default async function Profile() {
     FROM characters ch
     JOIN classes c ON c.id=ch.class_id
     WHERE ch.user_id=$1
+      AND ch.archived_at IS NULL
     ORDER BY ch.character_name
   `,[user.id]);
 
@@ -53,13 +54,15 @@ export default async function Profile() {
     <h1>Your characters</h1>
     <p className="muted">
       Add and manage the characters/classes you can bring to raids.
+      Removed characters are hidden here but retained internally when needed
+      for completed party history.
     </p>
 
     <CharacterForm classes={classes.rows}/>
 
     <h2 className="section-title">Characters</h2>
 
-    <div className="grid">
+    <div className="grid character-grid">
       {chars.rows.length===0&&
         <div className="card muted">
           You have not added any characters yet.

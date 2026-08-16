@@ -431,3 +431,53 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
 .admin-confirm-actions .btn {
   min-width:120px;
 }
+
+
+/* Character profile card alignment */
+.character-grid {
+  align-items:stretch;
+}
+
+.character-card {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  height:100%;
+}
+
+.character-card-main {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+}
+
+.character-card-copy {
+  min-width:0;
+}
+
+.character-card-copy strong,
+.character-meta {
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+.character-card-actions {
+  margin-top:auto;
+}
+
+.character-card-message {
+  overflow-wrap:anywhere;
+  line-height:1.45;
+}
+
+.character-card-edit .character-card-actions {
+  margin-top:0;
+}
+
+@media(max-width:520px) {
+  .character-card-actions .btn {
+    flex:1 1 auto;
+  }
+}

@@ -154,6 +154,7 @@ export default async function PartyPage({
     FROM characters ch
     JOIN classes c ON c.id=ch.class_id
     WHERE ch.user_id=$1
+      AND ch.archived_at IS NULL
     ORDER BY ch.character_name
   `,[user.id]);
 
@@ -393,7 +394,7 @@ export default async function PartyPage({
       </div>
 
       <p>
-        <strong>{party.encounters}</strong> · Difficulty Stage{" "}
+        <strong>{party.encounters}</strong> - Difficulty Stage{" "}
         {party.difficulty_stage}
       </p>
 
@@ -401,7 +402,7 @@ export default async function PartyPage({
         <span className="muted">Starts:</span>{" "}
         <LocalDateTime iso={new Date(party.start_time).toISOString()}/>
         {party.end_time&&<>
-          {" — "}
+          {" - "}
           <LocalDateTime
             iso={new Date(party.end_time).toISOString()}
             timeOnly
@@ -412,18 +413,18 @@ export default async function PartyPage({
       <div>
         <div className="muted">Requested composition</div>
         <strong>
-          {party.need_physical} Physical ·{" "}
-          {party.need_magical} Magical ·{" "}
+          {party.need_physical} Physical  - {" "}
+          {party.need_magical} Magical  - {" "}
           {party.need_support} Support
         </strong>
       </div>
 
       <div className="need">
-        Still requested: {currentRemaining.physical} Physical ·{" "}
-        {currentRemaining.magical} Magical ·{" "}
+        Still requested: {currentRemaining.physical} Physical  - {" "}
+        {currentRemaining.magical} Magical  - {" "}
         {currentRemaining.support} Support{" "}
         <span className="muted">
-          · {members.rows.length}/{party.party_size} players
+          - {members.rows.length}/{party.party_size} players
         </span>
       </div>
 
@@ -548,7 +549,7 @@ export default async function PartyPage({
                 <span className="muted">@{m.username}</span>
                 <div className="muted">
                   {m.character_name??"No character selected"}
-                  {m.damage_type?` · ${m.damage_type} ${m.role}`:""}
+                  {m.damage_type?` - ${m.damage_type} ${m.role}`:""}
                 </div>
               </div>
             </div>
@@ -575,3 +576,4 @@ export default async function PartyPage({
     </div>
   </main>;
 }
+

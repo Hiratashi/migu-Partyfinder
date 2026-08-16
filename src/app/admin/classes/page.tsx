@@ -79,7 +79,7 @@ export default async function AdminClassesPage() {
 
           <div className="muted">
             Order {c.sort_order}
-            {c.icon_path?` · Icon: ${c.icon_path}`:" · No icon configured"}
+            {c.icon_path?` - Icon: ${c.icon_path}`:" - No icon configured"}
           </div>
 
           <Link className="btn" href={`/admin/classes/${c.id}`}>

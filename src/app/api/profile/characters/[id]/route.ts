@@ -36,35 +36,55 @@ export async function PATCH(
 
   if(!cls.rowCount) {
     return NextResponse.json(
-      {error:"invalid_class",message:"That class is not currently selectable."},
+      {
+        error:"invalid_class",
+        message:"That class is not currently selectable.",
+      },
       {status:400},
     );
   }
 
-  const updated=await query(`
-    UPDATE characters
-    SET
-      class_id=$1,
-      character_name=$2
-    WHERE id=$3 AND user_id=$4
-    RETURNING id
-  `,[
-    parsed.data.classId,
-    parsed.data.characterName,
-    id,
-    user.id,
-  ]);
+  try {
+    const updated=await query(`
+      UPDATE characters
+      SET
+        class_id=$1,
+        character_name=$2
+      WHERE id=$3
+        AND user_id=$4
+        AND archived_at IS NULL
+      RETURNING id
+    `,[
+      parsed.data.classId,
+      parsed.data.characterName,
+      id,
+      user.id,
+    ]);
 
-  if(!updated.rowCount) {
-    return NextResponse.json({error:"not_found"},{status:404});
+    if(!updated.rowCount) {
+      return NextResponse.json({error:"not_found"},{status:404});
+    }
+
+    await query(
+      "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'CHARACTER_UPDATE','character',$2)",
+      [user.id,id],
+    );
+
+    return NextResponse.json({ok:true,id});
+  } catch(e:any) {
+    if(e?.code==="23505") {
+      return NextResponse.json(
+        {
+          error:"duplicate_character_name",
+          message:"You already have another active character with that name.",
+        },
+        {status:409},
+      );
+    }
+
+    console.error(e);
+    return NextResponse.json({error:"server_error"},{status:500});
   }
-
-  await query(
-    "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'CHARACTER_UPDATE','character',$2)",
-    [user.id,id],
-  );
-
-  return NextResponse.json({ok:true,id});
 }
 
 export async function DELETE(
@@ -85,28 +105,41 @@ export async function DELETE(
   const owned=await query<{character_name:string}>(`
     SELECT character_name
     FROM characters
-    WHERE id=$1 AND user_id=$2
+    WHERE id=$1
+      AND user_id=$2
+      AND archived_at IS NULL
   `,[id,user.id]);
 
   if(!owned.rowCount) {
     return NextResponse.json({error:"not_found"},{status:404});
   }
 
-  const partyRefs=await query<{count:number}>(`
-    SELECT COUNT(*)::int count
-    FROM party_members
-    WHERE character_id=$1
+  const activePartyRefs=await query<{
+    party_id:string;
+    title:string|null;
+    raid_name:string;
+  }>(`
+    SELECT
+      p.id party_id,
+      p.title,
+      r.name raid_name
+    FROM party_members pm
+    JOIN parties p ON p.id=pm.party_id
+    JOIN raids r ON r.id=p.raid_id
+    WHERE pm.character_id=$1
+      AND pm.status='ACCEPTED'
+      AND p.status IN ('OPEN','FULL')
+    ORDER BY p.start_time
   `,[id]);
 
-  if(partyRefs.rows[0].count>0) {
+  if(activePartyRefs.rowCount) {
     return NextResponse.json(
       {
-        error:"character_in_use",
+        error:"character_in_active_party",
         message:
-          `This character cannot be removed because `+
-          `${partyRefs.rows[0].count} party record${
-            partyRefs.rows[0].count===1?" references":"s reference"
-          } it. Change the character on those active parties first; historical party references are kept for integrity.`,
+          `This character is still selected in ${activePartyRefs.rowCount} `+
+          `active part${activePartyRefs.rowCount===1?"y":"ies"}. `+
+          `Change character or leave those parties first.`,
       },
       {status:409},
     );
@@ -117,28 +150,40 @@ export async function DELETE(
   try {
     await client.query("BEGIN");
 
+    // Remove it from future matching/profile availability.
     await client.query(
       "DELETE FROM availability_profile_characters WHERE character_id=$1",
       [id],
     );
 
-    const deleted=await client.query(
-      "DELETE FROM characters WHERE id=$1 AND user_id=$2 RETURNING id",
+    const archived=await client.query(
+      `UPDATE characters
+       SET archived_at=now()
+       WHERE id=$1
+         AND user_id=$2
+         AND archived_at IS NULL
+       RETURNING id`,
       [id,user.id],
     );
 
-    if(!deleted.rowCount) {
+    if(!archived.rowCount) {
       await client.query("ROLLBACK");
       return NextResponse.json({error:"not_found"},{status:404});
     }
 
     await client.query(
-      "INSERT INTO audit_log(user_id,action,entity_type,entity_id,metadata) VALUES($1,'CHARACTER_DELETE','character',$2,jsonb_build_object('character_name',$3::text))",
+      `INSERT INTO audit_log(
+        user_id,action,entity_type,entity_id,metadata
+      )
+      VALUES(
+        $1,'CHARACTER_ARCHIVE','character',$2,
+        jsonb_build_object('character_name',$3::text)
+      )`,
       [user.id,id,owned.rows[0].character_name],
     );
 
     await client.query("COMMIT");
-    return NextResponse.json({ok:true});
+    return NextResponse.json({ok:true,archived:true});
   } catch(e) {
     await client.query("ROLLBACK");
     console.error(e);

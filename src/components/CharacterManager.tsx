@@ -94,7 +94,7 @@ export default function CharacterManager({
   }
 
   if(editing) {
-    return <article className="card stack">
+    return <article className="card stack character-card character-card-edit">
       <div className="row">
         <div className="classicon">{character.abbreviation}</div>
         <strong>Edit character</strong>
@@ -122,7 +122,7 @@ export default function CharacterManager({
         </select>
       </label>
 
-      <div className="row">
+      <div className="row character-card-actions">
         <button
           type="button"
           className="btn primary"
@@ -147,49 +147,56 @@ export default function CharacterManager({
         </button>
       </div>
 
-      {message&&<span className="error" role="alert">{message}</span>}
+      {message&&
+        <span className="error character-card-message" role="alert">
+          {message}
+        </span>
+      }
     </article>;
   }
 
   return <>
-    <article className="card stack">
-      <div className="row between">
-        <div className="row">
-          <div className="classicon">{character.abbreviation}</div>
-          <div>
-            <strong>{character.character_name}</strong>
-            <div className="muted">
-              {character.name} · {character.damage_type} · {character.role}
-            </div>
+    <article className="card character-card">
+      <div className="character-card-main">
+        <div className="classicon">{character.abbreviation}</div>
+
+        <div className="character-card-copy">
+          <strong>{character.character_name}</strong>
+          <div className="muted character-meta">
+            {character.name} - {character.damage_type} - {character.role}
           </div>
-        </div>
-
-        <div className="row">
-          <button
-            type="button"
-            className="btn"
-            onClick={()=>setEditing(true)}
-          >
-            Edit
-          </button>
-
-          <button
-            type="button"
-            className="btn danger-subtle"
-            onClick={()=>setConfirmOpen(true)}
-          >
-            Remove
-          </button>
         </div>
       </div>
 
-      {message&&<span className="error" role="alert">{message}</span>}
+      <div className="row character-card-actions">
+        <button
+          type="button"
+          className="btn"
+          onClick={()=>setEditing(true)}
+        >
+          Edit
+        </button>
+
+        <button
+          type="button"
+          className="btn danger-subtle"
+          onClick={()=>setConfirmOpen(true)}
+        >
+          Remove
+        </button>
+      </div>
+
+      {message&&
+        <span className="error character-card-message" role="alert">
+          {message}
+        </span>
+      }
     </article>
 
     <AdminConfirmDialog
       open={confirmOpen}
       title={`Remove ${character.character_name}?`}
-      message="This permanently removes the character from your profile and availability selections. Removal is blocked if a party record currently references this character."
+      message="This removes the character from your profile and future availability, while completed party history keeps the original character record. Removal is blocked only while the character is selected in an active party."
       confirmLabel="Remove character"
       busy={busy}
       onCancel={()=>setConfirmOpen(false)}

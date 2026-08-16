@@ -73,7 +73,7 @@ export async function PUT(req:NextRequest) {
   const chars=await query(`
     SELECT id
     FROM characters
-    WHERE user_id=$1 AND id=ANY($2::uuid[])
+    WHERE user_id=$1 AND archived_at IS NULL AND id=ANY($2::uuid[])
   `,[user.id,d.characterIds]);
 
   if(chars.rowCount!==d.characterIds.length) {

@@ -84,7 +84,7 @@ export async function POST(
       SELECT ch.id,c.damage_type,c.role
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
-      WHERE ch.id=$1 AND ch.user_id=$2
+      WHERE ch.id=$1 AND ch.user_id=$2 AND ch.archived_at IS NULL
     `,[body.data.characterId,user.id]);
 
     if(!cr.rowCount) {

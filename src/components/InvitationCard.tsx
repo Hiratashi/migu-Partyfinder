@@ -11,7 +11,7 @@ export default function InvitationCard({
   return <div className="card stack">
     <strong>Raid invitation from {party.leader}</strong>
     <span>
-      {party.encounters} · <LocalDateTime iso={party.start}/>
+      {party.encounters} - <LocalDateTime iso={party.start}/>
     </span>
     <p className="muted">
       Open the party to review the run, current members and requested

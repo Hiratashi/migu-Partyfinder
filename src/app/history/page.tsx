@@ -62,7 +62,7 @@ export default async function History() {
             <LocalDateTime
               iso={new Date(p.start_time).toISOString()}
             />
-            {" "}· Leader: {p.leader}
+            {" "} -  Leader: {p.leader}
           </span>
           <Link className="btn" href={`/parties/${p.id}`}>View</Link>
         </article>

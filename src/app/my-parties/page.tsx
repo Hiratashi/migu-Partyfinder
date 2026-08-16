@@ -172,7 +172,7 @@ export default async function MyParties() {
         {card(
           p,
           p.character_name
-            ? `Joined · ${p.character_name}${p.abbreviation?` (${p.abbreviation})`:""}`
+            ? `Joined - ${p.character_name}${p.abbreviation?` (${p.abbreviation})`:""}`
             : "Joined",
         )}
       </div>,
