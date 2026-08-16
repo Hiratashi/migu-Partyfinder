@@ -109,7 +109,7 @@ export default async function AdminUserPage({
         JOIN parties p ON p.id=pm.party_id
         WHERE pm.user_id=$1
           AND pm.status='ACCEPTED'
-          AND p.status IN ('DONE','CANCELLED')
+          AND p.status IN ('DONE','CANCELLED','EXPIRED')
       ) history_count
   `,[id]);
 

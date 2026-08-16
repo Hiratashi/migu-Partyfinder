@@ -32,7 +32,7 @@ export default async function History() {
     JOIN users u ON u.id=p.leader_id
     JOIN party_encounters pe ON pe.party_id=p.id
     JOIN encounters e ON e.id=pe.encounter_id
-    WHERE p.status IN ('DONE','CANCELLED')
+    WHERE p.status IN ('DONE','CANCELLED','EXPIRED')
     GROUP BY p.id,r.name,u.display_name,u.username
     ORDER BY p.start_time DESC
     LIMIT 200
@@ -41,7 +41,7 @@ export default async function History() {
   return <main>
     <h1>Party history</h1>
     <p className="muted">
-      Completed and cancelled runs are kept out of the active Partyfinder
+      Completed, cancelled, and expired runs are kept out of the active Partyfinder
       but remain available for reference.
     </p>
 

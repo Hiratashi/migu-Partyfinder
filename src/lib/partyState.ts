@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import { query } from "@/lib/db";
 
-export type PartyStatus = "OPEN" | "FULL" | "CANCELLED" | "DONE";
+export type PartyStatus = "OPEN" | "FULL" | "CANCELLED" | "DONE" | "EXPIRED";
 
 export type PartyCapacity = {
   partySize: number;
@@ -54,7 +54,7 @@ export async function syncPartyOpenFull(
   const current = await getPartyCapacity(partyId, client);
   if (!current) return null;
 
-  if (current.status === "DONE" || current.status === "CANCELLED") {
+  if (current.status === "DONE" || current.status === "CANCELLED" || current.status === "EXPIRED") {
     return current;
   }
 

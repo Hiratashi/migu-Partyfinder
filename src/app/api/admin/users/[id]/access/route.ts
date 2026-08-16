@@ -49,9 +49,8 @@ export async function PATCH(
     const target=await client.query<{
       username:string;
       is_admin:boolean;
-      access_disabled:boolean;
     }>(`
-      SELECT username,is_admin,access_disabled
+      SELECT username,is_admin
       FROM users
       WHERE id=$1
       FOR UPDATE
@@ -82,10 +81,18 @@ export async function PATCH(
       }
     }
 
-    await client.query(
-      "UPDATE users SET access_disabled=$1,updated_at=now() WHERE id=$2",
-      [parsed.data.disabled,id],
-    );
+    await client.query(`
+      UPDATE users
+      SET
+        access_disabled=$1,
+        access_disabled_reason=$2,
+        updated_at=now()
+      WHERE id=$3
+    `,[
+      parsed.data.disabled,
+      parsed.data.disabled?"ADMIN":null,
+      id,
+    ]);
 
     if(parsed.data.disabled) {
       await client.query(
@@ -113,7 +120,6 @@ export async function PATCH(
     );
 
     await client.query("COMMIT");
-
     return NextResponse.json({ok:true});
   } catch(e) {
     await client.query("ROLLBACK");

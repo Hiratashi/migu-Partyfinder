@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
-  exchangeCode,
   getDiscordGuilds,
   getDiscordUser,
   userHasRequiredRole,
 } from "@/lib/discord";
+import { exchangeDiscordCodeWithRefresh } from "@/lib/discord-oauth";
+import { storeDiscordOAuthTokens } from "@/lib/discord-token-store";
 import { query } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 import { timingSafeEqual } from "@/lib/crypto";
@@ -31,11 +32,12 @@ export async function GET(req:NextRequest) {
   }
 
   try {
-    const {access_token}=await exchangeCode(code);
+    const token=await exchangeDiscordCodeWithRefresh(code);
+    const accessToken=token.access_token;
 
     const [du,guilds]=await Promise.all([
-      getDiscordUser(access_token),
-      getDiscordGuilds(access_token),
+      getDiscordUser(accessToken),
+      getDiscordGuilds(accessToken),
     ]);
 
     const guildId=process.env.DISCORD_GUILD_ID!;
@@ -52,7 +54,7 @@ export async function GET(req:NextRequest) {
     if(
       requiredRole&&
       !(await userHasRequiredRole(
-        access_token,
+        accessToken,
         guildId,
         requiredRole,
       ))
@@ -69,21 +71,27 @@ export async function GET(req:NextRequest) {
     const r=await query<{
       id:string;
       access_disabled:boolean;
+      access_disabled_reason:string|null;
     }>(`
       INSERT INTO users(
         discord_id,
         username,
         display_name,
-        avatar_url
+        avatar_url,
+        guild_membership_checked_at
       )
-      VALUES($1,$2,$3,$4)
+      VALUES($1,$2,$3,$4,now())
       ON CONFLICT(discord_id)
       DO UPDATE SET
         username=EXCLUDED.username,
         display_name=EXCLUDED.display_name,
         avatar_url=EXCLUDED.avatar_url,
+        guild_membership_checked_at=now(),
         updated_at=now()
-      RETURNING id,access_disabled
+      RETURNING
+        id,
+        access_disabled,
+        access_disabled_reason
     `,[
       du.id,
       du.username,
@@ -93,19 +101,35 @@ export async function GET(req:NextRequest) {
 
     const user=r.rows[0];
 
-    if(user.access_disabled) {
-      await query(
-        "DELETE FROM sessions WHERE user_id=$1",
-        [user.id],
-      );
-
+    // A guild-leave suspension is automatically reversible when the user
+    // later proves membership again through Discord OAuth.
+    if(
+      user.access_disabled&&
+      user.access_disabled_reason==="LEFT_GUILD"
+    ) {
+      await query(`
+        UPDATE users
+        SET
+          access_disabled=false,
+          access_disabled_reason=NULL,
+          updated_at=now()
+        WHERE id=$1
+      `,[user.id]);
+    } else if(user.access_disabled) {
       return NextResponse.redirect(
         `${process.env.APP_URL}/login?error=access_disabled`,
       );
     }
 
+    await storeDiscordOAuthTokens(user.id,token);
+
     await query(
-      "UPDATE users SET last_login_at=now(),updated_at=now() WHERE id=$1",
+      `UPDATE users
+       SET
+         last_login_at=now(),
+         guild_membership_checked_at=now(),
+         updated_at=now()
+       WHERE id=$1`,
       [user.id],
     );
 
