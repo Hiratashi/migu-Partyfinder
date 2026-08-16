@@ -21,13 +21,17 @@ export default function AccountMenu({
 
   useEffect(()=>{
     function onPointer(e:PointerEvent) {
-      if(open && ref.current && !ref.current.contains(e.target as Node)) {
+      if(
+        open&&
+        ref.current&&
+        !ref.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
 
     function onKey(e:KeyboardEvent) {
-      if(e.key==="Escape") setOpen(false);
+      if(e.key==="Escape")setOpen(false);
     }
 
     window.addEventListener("pointerdown",onPointer);
@@ -56,17 +60,30 @@ export default function AccountMenu({
         <span>@{user.username}</span>
       </div>
 
-      <Link href="/availability" role="menuitem">Availability</Link>
-      <Link href="/profile" role="menuitem">Profile & characters</Link>
+      <Link href="/availability" role="menuitem">
+        Availability
+      </Link>
+      <Link href="/profile" role="menuitem">
+        Profile & characters
+      </Link>
 
       {user.is_admin&&<>
         <div className="account-menu-divider"/>
-        <Link href="/admin/raids" role="menuitem">Raid administration</Link>
-        <Link href="/admin/classes" role="menuitem">Class administration</Link>
+        <Link href="/admin/raids" role="menuitem">
+          Raid administration
+        </Link>
+        <Link href="/admin/classes" role="menuitem">
+          Class administration
+        </Link>
+        <Link href="/admin/users" role="menuitem">
+          User administration
+        </Link>
       </>}
 
       <form action="/api/auth/logout" method="post">
-        <button type="submit" role="menuitem">Logout</button>
+        <button type="submit" role="menuitem">
+          Logout
+        </button>
       </form>
     </div>}
   </div>;
