@@ -77,10 +77,10 @@ body:
       label: Screenshot or additional context
       description: You can drag screenshots into this box. Remove any sensitive information first.
 
-  - type: checkboxes
-    id: safety
-    attributes:
-      label: Sensitive information
-      options:
-        - label: I have checked that this report does not contain passwords, tokens, cookies, `.env` contents or private keys.
-          required: true
+- type: checkboxes
+  id: safety
+  attributes:
+    label: Sensitive information
+    options:
+      - label: I have checked that this report does not contain passwords, tokens, cookies, `.env` contents or private keys.
+        required: true
