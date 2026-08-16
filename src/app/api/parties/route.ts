@@ -4,11 +4,14 @@ import { currentUser } from "@/lib/auth";
 import { createPartySchema } from "@/data/validation";
 import { db, query } from "@/lib/db";
 import { getRaidBySlug, raidSupportsStage } from "@/lib/raids";
+import { limitWrite } from "@/lib/rate-limit";
 
 export async function POST(req:NextRequest) {
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const user=await currentUser();
   if(!user) {

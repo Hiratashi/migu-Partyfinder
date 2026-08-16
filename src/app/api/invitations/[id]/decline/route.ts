@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
+import { limitWrite } from "@/lib/rate-limit";
 
 export async function POST(
   req:NextRequest,
@@ -13,6 +14,8 @@ export async function POST(
       {status:403},
     );
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const user=await currentUser();
   if(!user) {

@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
+import { limitWrite } from "@/lib/rate-limit";
 
 const schema=z.object({characterId:z.string().uuid()});
 
@@ -28,6 +29,8 @@ export async function PATCH(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const user=await currentUser();
   if(!user) {

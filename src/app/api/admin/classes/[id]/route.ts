@@ -3,12 +3,15 @@ import { currentAdmin } from "@/lib/admin";
 import { classAdminSchema } from "@/lib/class-admin-validation";
 import { query } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
+import { limitWrite } from "@/lib/rate-limit";
 
 export async function PATCH(
   req:NextRequest,
   {params}:{params:Promise<{id:string}>},
 ) {
   if(!sameOrigin(req))return NextResponse.json({error:"bad_origin"},{status:403});
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
   const admin=await currentAdmin();
   if(!admin)return NextResponse.json({error:"forbidden"},{status:403});
 

@@ -3,6 +3,7 @@ import { currentAdmin } from "@/lib/admin";
 import { encounterAdminSchema } from "@/lib/admin-validation";
 import { query } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
+import { limitWrite } from "@/lib/rate-limit";
 
 export async function POST(
   req:NextRequest,
@@ -11,6 +12,8 @@ export async function POST(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const admin=await currentAdmin();
   if(!admin) {

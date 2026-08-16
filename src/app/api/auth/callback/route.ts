@@ -11,8 +11,11 @@ import { query } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 import { timingSafeEqual } from "@/lib/crypto";
 import { writeAudit } from "@/lib/audit";
+import { limitAuthCallback } from "@/lib/rate-limit";
 
 export async function GET(req:NextRequest) {
+  const limited=limitAuthCallback(req);
+  if(limited)return limited;
   const url=new URL(req.url);
   const code=url.searchParams.get("code");
   const state=url.searchParams.get("state");

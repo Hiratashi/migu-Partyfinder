@@ -3,6 +3,7 @@ import { z } from "zod";
 import { currentAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
+import { limitWrite } from "@/lib/rate-limit";
 
 const schema=z.object({
   disabled:z.boolean(),
@@ -15,6 +16,8 @@ export async function PATCH(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const admin=await currentAdmin();
   if(!admin) {

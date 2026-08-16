@@ -16,7 +16,6 @@ export async function exchangeDiscordCodeWithRefresh(
   if(!clientId||!clientSecret||!appUrl) {
     throw new Error("Discord OAuth configuration is incomplete");
   }
-
   const redirectUri=
     process.env.DISCORD_REDIRECT_URI?.trim()||
     `${appUrl}/api/auth/callback`;
@@ -30,7 +29,6 @@ export async function exchangeDiscordCodeWithRefresh(
   const auth=Buffer
     .from(`${clientId}:${clientSecret}`)
     .toString("base64");
-
   const r=await fetch("https://discord.com/api/oauth2/token",{
     method:"POST",
     headers:{
@@ -42,9 +40,11 @@ export async function exchangeDiscordCodeWithRefresh(
   });
 
   if(!r.ok) {
-    const text=await r.text().catch(()=>"");
+    // Do not include Discord's response body in application logs. OAuth error
+    // payloads are not needed for normal diagnostics and may contain details
+    // we do not want persisted by production logging.
     throw new Error(
-      `Discord OAuth exchange failed: ${r.status} ${text}`,
+      `Discord OAuth exchange failed with HTTP ${r.status}`,
     );
   }
 

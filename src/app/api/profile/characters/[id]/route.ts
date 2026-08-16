@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/auth";
 import { characterSchema } from "@/data/validation";
 import { db, query } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
+import { limitWrite } from "@/lib/rate-limit";
 
 export async function PATCH(
   req:NextRequest,
@@ -11,6 +12,8 @@ export async function PATCH(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const user=await currentUser();
   if(!user) {
@@ -94,6 +97,8 @@ export async function DELETE(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const user=await currentUser();
   if(!user) {

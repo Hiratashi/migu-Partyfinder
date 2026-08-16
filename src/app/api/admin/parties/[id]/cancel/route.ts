@@ -4,6 +4,7 @@ import { currentAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { writeAudit } from "@/lib/audit";
+import { limitWrite } from "@/lib/rate-limit";
 
 const schema=z.object({
   reason:z.string().trim().max(300).optional(),
@@ -16,6 +17,8 @@ export async function POST(
   if(!sameOrigin(req)) {
     return NextResponse.json({error:"bad_origin"},{status:403});
   }
+  const rateLimited=limitWrite(req);
+  if(rateLimited)return rateLimited;
 
   const admin=await currentAdmin();
 
