@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import {
   getDiscordGuilds,
   getDiscordUser,
@@ -12,6 +11,7 @@ import { createSession } from "@/lib/auth";
 import { timingSafeEqual } from "@/lib/crypto";
 import { writeAudit } from "@/lib/audit";
 import { limitAuthCallback } from "@/lib/rate-limit";
+import { consumeOAuthStateCookie } from "@/lib/cookie-config";
 
 export async function GET(req:NextRequest) {
   const limited=limitAuthCallback(req);
@@ -20,9 +20,7 @@ export async function GET(req:NextRequest) {
   const code=url.searchParams.get("code");
   const state=url.searchParams.get("state");
 
-  const jar=await cookies();
-  const expected=jar.get("discord_oauth_state")?.value;
-  jar.delete("discord_oauth_state");
+  const expected=await consumeOAuthStateCookie();
 
   if(
     !code||

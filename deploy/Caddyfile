@@ -1,0 +1,15 @@
+# Replace partyfinder.example.com with the real production hostname.
+#
+# Caddy automatically obtains and renews a publicly trusted TLS certificate
+# once DNS points this hostname to the server and ports 80/443 are reachable.
+
+partyfinder.example.com {
+	# Do not expose the application's Docker health endpoint publicly.
+	respond /api/health 404
+
+	# Compression for normal HTML/CSS/JS responses.
+	encode zstd gzip
+
+	# The Next.js container remains bound to loopback only.
+	reverse_proxy 127.0.0.1:3000
+}
