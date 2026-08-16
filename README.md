@@ -18,21 +18,21 @@ If you just want to use Partyfinder, start here:
 
 ## Current features
 
-- Discord OAuth login; no local passwords.
-- Guild membership verification.
-- Character profiles with class selection and copyable in-game names.
-- Weekly availability with local-time handling.
-- Open party browser.
-- Create, edit, join, leave, cancel and complete parties.
-- Party invitations.
-- Physical / Magical / Support composition requirements.
-- Doom Aporia encounter and stage selection.
-- Practice and clear party support.
-- My Parties and party history.
-- Admin dashboard for users, raids, classes, parties and audit events.
-- Automatic party lifecycle handling, including expiry and guild-leave cleanup.
-- PostgreSQL persistence, Docker deployment and Caddy/HTTPS production hosting.
-- Application health checks, same-origin protection and rate limiting.
+- Discord OAuth login; no local passwords
+- Guild membership verification
+- Character profiles with class selection and copyable in-game names
+- Weekly availability with local-time handling
+- Open party browser
+- Create, edit, join, leave, cancel and complete parties
+- Party invitations
+- Physical / Magical / Support composition requirements
+- Doom Aporia encounter and stage selection
+- Practice and clear party support
+- My Parties and party history
+- Admin dashboard for users, raids, classes, parties and audit events
+- Automatic party lifecycle handling, including expiry and guild-leave cleanup
+- PostgreSQL persistence, Docker deployment and Caddy/HTTPS production hosting
+- Application health checks, same-origin protection and rate limiting
 
 ## Beta status
 
@@ -40,9 +40,9 @@ The core workflow is working and the live service is available for testing.
 
 During beta:
 
-- bugs may still appear;
-- UX may change based on feedback;
-- admin configuration may be adjusted;
+- bugs may still appear
+- UX may change based on feedback
+- admin configuration may be adjusted
 - database resets or migrations are still possible if needed.
 
 Please use GitHub Issues for actionable bug reports and improvement requests.
@@ -150,7 +150,7 @@ GitHub Issues is the preferred place for beta feedback that needs action.
 Use:
 
 - **Bug report** when something is not working as expected.
-- **Feature / improvement request** for ideas, UX improvements or new functionality.
+- **Feature / improvement request** for ideas, UX improvements or new functionality
 
 Please avoid posting secrets, Discord tokens, passwords, `.env` contents or private server information in issues.
 

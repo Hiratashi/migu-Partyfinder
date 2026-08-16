@@ -8,10 +8,10 @@ The main raid-planning workflow is working and the live site is available for re
 
 During beta:
 
-- features may change based on feedback;
-- bugs may still occur;
-- wording/layout may be adjusted;
-- admin configuration may change;
+- features may change based on feedback
+- bugs may still occur
+- wording/layout may be adjusted
+- admin configuration may change
 - migrations or data cleanup may occasionally be necessary.
 
 The goal is to let the guild use the tool normally while collecting practical feedback.
@@ -20,17 +20,17 @@ The goal is to let the guild use the tool normally while collecting practical fe
 
 The most useful beta testing is ordinary usage:
 
-- Discord login;
-- character creation/editing;
-- availability;
-- party creation;
-- joining/leaving;
-- invitations;
-- role/class selection;
-- local-time display;
-- My Parties;
-- history;
-- copyable in-game character names.
+- Discord login
+- character creation/editing
+- availability
+- party creation
+- joining/leaving
+- invitations
+- role/class selection
+- local-time display
+- My Parties
+- history
+- copyable in-game character names
 
 Administrators should also test moderation and configuration workflows.
 
@@ -48,10 +48,10 @@ Screenshots are welcome when they help explain the issue.
 
 Use **Feature / improvement request** for:
 
-- UX polish;
-- confusing workflows;
-- missing quality-of-life features;
-- ideas for future Partyfinder functionality.
+- UX polish
+- confusing workflows
+- missing quality-of-life features
+- ideas for future Partyfinder functionality
 
 Feedback does not need to be a large new feature. Small usability problems are exactly what this beta is intended to uncover.
 
@@ -61,13 +61,13 @@ Do not put sensitive information in a public GitHub issue.
 
 Never include:
 
-- passwords;
-- Discord client secrets;
-- OAuth tokens;
-- cookies/session tokens;
-- `.env` contents;
-- database passwords;
-- SSH private keys.
+- passwords
+- Discord client secrets
+- OAuth tokens
+- cookies/session tokens
+- `.env` contents
+- database passwords
+- SSH private keys
 
 If a report appears security-sensitive, contact the maintainer privately instead of publishing exploit details.
 
