@@ -10,7 +10,8 @@ export const partySchema = z.object({
   practiceEncounterIds: z.array(z.string().uuid()).max(20).default([]),
   needPhysical: z.number().int().min(0).max(12),
   needMagical: z.number().int().min(0).max(12),
-  needSupport: z.number().int().min(0).max(12)
+  needSupport: z.number().int().min(0).max(12),
+  compositionRestricted: z.boolean().default(true)
 }).superRefine((v, ctx) => {
   if (v.endTime && new Date(v.endTime) <= new Date(v.startTime)) ctx.addIssue({ code: "custom", message: "End time must be after start time", path: ["endTime"] });
   if (v.isPractice && v.practiceEncounterIds.length === 0) ctx.addIssue({ code: "custom", message: "Choose at least one fight to practice", path: ["practiceEncounterIds"] });
