@@ -74,7 +74,7 @@ export default function PartyCard({
         <span className="label">When</span>
         <strong>
           <LocalDateTime iso={party.start}/>
-          {party.end&&<> → <LocalDateTime iso={party.end} timeOnly/></>}
+          {party.end&&<> → <LocalDateTime iso={party.end}/></>}
         </strong>
       </div>
     </div>

@@ -403,17 +403,16 @@ export default async function PartyPage({
         {party.difficulty_stage}
       </p>
 
-      <p>
-        <span className="muted">Starts:</span>{" "}
-        <LocalDateTime iso={new Date(party.start_time).toISOString()}/>
-        {party.end_time&&<>
-          {" - "}
-          <LocalDateTime
-            iso={new Date(party.end_time).toISOString()}
-            timeOnly
-          />
-        </>}
-      </p>
+	<p>
+	  <span className="muted">Starts:</span>{" "}
+	  <LocalDateTime iso={new Date(party.start_time).toISOString()}/>
+	  {party.end_time&&<>
+		{" - "}
+		<LocalDateTime
+		  iso={new Date(party.end_time).toISOString()}
+		/>
+	  </>}
+	</p>
 
       <div>
         <div className="muted">Requested composition</div>
