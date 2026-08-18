@@ -316,12 +316,13 @@ export default async function PartyPage({
               )
               ORDER BY aws.day_of_week,aws.minute_of_day
             )
-            FROM availability_weekly_slots aws
-            WHERE aws.profile_id=ap.id
+            FROM availability_user_weekly_slots aws
+            WHERE aws.user_id=ap.user_id
           ),'[]'::jsonb) slots
         FROM availability_profiles ap
         JOIN users u ON u.id=ap.user_id
         WHERE ap.raid_id=$1
+          AND ap.enabled=true
           AND ap.user_id<>$2
           AND NOT EXISTS(
             SELECT 1
