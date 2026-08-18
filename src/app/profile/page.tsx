@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import CharacterForm from "@/components/CharacterForm";
 import CharacterManager from "@/components/CharacterManager";
+import ProfileIdentityCard from "@/components/ProfileIdentityCard";
 
 type C={
   id:string;
@@ -25,60 +26,95 @@ type Ch={
   icon_path:string|null;
 };
 
+type ProfileRow={
+  profile_image_path:string|null;
+};
+
 export default async function Profile() {
   const user=await requireUser();
 
-  const classes=await query<C>(`
-    SELECT
-      id,name,abbreviation,damage_type,role,icon_path,
-      base_character,path_number
-    FROM classes
-    WHERE active=true
-    ORDER BY sort_order,name
-  `);
+  const [classes,chars,profile]=await Promise.all([
+    query<C>(`
+      SELECT
+        id,name,abbreviation,damage_type,role,icon_path,
+        base_character,path_number
+      FROM classes
+      WHERE active=true
+      ORDER BY sort_order,name
+    `),
+    query<Ch>(`
+      SELECT
+        ch.id,
+        ch.class_id,
+        ch.character_name,
+        c.name,
+        c.abbreviation,
+        c.damage_type,
+        c.role,
+        c.icon_path
+      FROM characters ch
+      JOIN classes c ON c.id=ch.class_id
+      WHERE ch.user_id=$1
+        AND ch.archived_at IS NULL
+      ORDER BY ch.character_name
+    `,[user.id]),
+    query<ProfileRow>(`
+      SELECT profile_image_path
+      FROM users
+      WHERE id=$1
+    `,[user.id]),
+  ]);
 
-  const chars=await query<Ch>(`
-    SELECT
-      ch.id,
-      ch.class_id,
-      ch.character_name,
-      c.name,
-      c.abbreviation,
-      c.damage_type,
-      c.role,
-      c.icon_path
-    FROM characters ch
-    JOIN classes c ON c.id=ch.class_id
-    WHERE ch.user_id=$1
-      AND ch.archived_at IS NULL
-    ORDER BY ch.character_name
-  `,[user.id]);
+  const customImageFilename=
+    profile.rows[0]?.profile_image_path??null;
+
+  const customImageUrl=customImageFilename
+    ? `/api/profile/image/${encodeURIComponent(customImageFilename)}`
+    : null;
 
   return <main>
-    <h1>Your characters</h1>
+    <h1>Profile & characters</h1>
     <p className="muted">
-      Add and manage the characters/classes you can bring to raids.
-      Removed characters remain internally only when needed for party history.
+      Manage how you appear to other players and the characters you can
+      bring to raids.
     </p>
 
-    <CharacterForm classes={classes.rows}/>
+    <ProfileIdentityCard
+      displayName={user.display_name??user.username}
+      username={user.username}
+      customImageUrl={customImageUrl}
+      discordAvatarUrl={user.avatar_url}
+    />
 
-    <h2 className="section-title">Characters</h2>
-
-    <div className="grid character-grid">
-      {chars.rows.length===0&&
-        <div className="card muted">
-          You have not added any characters yet.
+    <section className="profile-character-section">
+      <div className="profile-section-heading">
+        <div>
+          <h2 className="section-title">Your characters</h2>
+          <p className="muted">
+            Add and manage the characters/classes you can bring to raids.
+            Removed characters remain internally only when needed for
+            party history.
+          </p>
         </div>
-      }
+      </div>
 
-      {chars.rows.map(c=>
-        <CharacterManager
-          key={c.id}
-          character={c}
-          classes={classes.rows}
-        />
-      )}
-    </div>
+      <CharacterForm classes={classes.rows}/>
+
+      <div className="grid character-grid profile-character-grid">
+        {chars.rows.length===0&&
+          <div className="card muted">
+            You have not added any characters yet.
+          </div>
+        }
+
+        {chars.rows.map(c=>
+          <CharacterManager
+            key={c.id}
+            character={c}
+            classes={classes.rows}
+          />
+        )}
+      </div>
+    </section>
   </main>;
 }

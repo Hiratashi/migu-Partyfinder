@@ -30,6 +30,7 @@ function safeStoredFilename(value:string|null):value is string {
 
 async function removeStoredImage(filename:string|null) {
   if(!safeStoredFilename(filename))return;
+
   await unlink(path.join(uploadDirectory(),filename)).catch(e=>{
     if((e as NodeJS.ErrnoException).code!=="ENOENT") {
       console.error("Could not remove profile image",e);
@@ -46,12 +47,17 @@ export async function POST(req:NextRequest) {
   if(rateLimited)return rateLimited;
 
   const user=await currentUser();
+
   if(!user) {
     return NextResponse.json({error:"unauthorized"},{status:401});
   }
 
   const contentLength=Number(req.headers.get("content-length")??"0");
-  if(Number.isFinite(contentLength)&&contentLength>MAX_REQUEST_BYTES) {
+
+  if(
+    Number.isFinite(contentLength)&&
+    contentLength>MAX_REQUEST_BYTES
+  ) {
     return NextResponse.json({
       error:"image_too_large",
       message:"Profile pictures must be 5 MB or smaller.",
@@ -59,13 +65,18 @@ export async function POST(req:NextRequest) {
   }
 
   let form:FormData;
+
   try {
     form=await req.formData();
   } catch {
-    return NextResponse.json({error:"invalid_form_data"},{status:400});
+    return NextResponse.json(
+      {error:"invalid_form_data"},
+      {status:400},
+    );
   }
 
   const image=form.get("image");
+
   if(!(image instanceof File)) {
     return NextResponse.json({
       error:"missing_image",
@@ -95,14 +106,19 @@ export async function POST(req:NextRequest) {
   }
 
   let processed:Buffer;
+
   try {
     const input=Buffer.from(await image.arrayBuffer());
+
     processed=await sharp(input,{
       failOn:"error",
       limitInputPixels:20_000_000,
     })
       .rotate()
-      .resize(512,512,{fit:"cover",position:"centre"})
+      .resize(512,512,{
+        fit:"cover",
+        position:"centre",
+      })
       .webp({quality:85})
       .toBuffer();
   } catch {
@@ -118,10 +134,22 @@ export async function POST(req:NextRequest) {
 
   try {
     await mkdir(directory,{recursive:true});
-    await writeFile(destination,processed,{flag:"wx",mode:0o600});
+
+    await writeFile(
+      destination,
+      processed,
+      {
+        flag:"wx",
+        mode:0o600,
+      },
+    );
   } catch(e) {
     console.error(e);
-    return NextResponse.json({error:"image_storage_failed"},{status:500});
+
+    return NextResponse.json(
+      {error:"image_storage_failed"},
+      {status:500},
+    );
   }
 
   const client=await db.connect();
@@ -130,41 +158,65 @@ export async function POST(req:NextRequest) {
   try {
     await client.query("BEGIN");
 
-    const existing=await client.query<{profile_image_path:string|null}>(`
+    const existing=await client.query<{
+      profile_image_path:string|null;
+    }>(`
       SELECT profile_image_path
       FROM users
       WHERE id=$1
       FOR UPDATE
     `,[user.id]);
 
-    previous=existing.rows[0]?.profile_image_path??null;
+    previous=
+      existing.rows[0]?.profile_image_path??null;
 
     await client.query(`
       UPDATE users
-      SET profile_image_path=$1,updated_at=now()
+      SET
+        profile_image_path=$1,
+        updated_at=now()
       WHERE id=$2
     `,[filename,user.id]);
 
     await client.query(`
       INSERT INTO audit_log(
-        user_id,action,entity_type,entity_id,metadata
-      ) VALUES(
-        $1,'PROFILE_IMAGE_UPDATE','user',$2,
-        jsonb_build_object('format','webp','size_bytes',$3::int)
+        user_id,
+        action,
+        entity_type,
+        entity_id,
+        metadata
+      )
+      VALUES(
+        $1,
+        'PROFILE_IMAGE_UPDATE',
+        'user',
+        $2,
+        jsonb_build_object(
+          'format','webp',
+          'size_bytes',$3::int
+        )
       )
     `,[user.id,user.id,processed.length]);
 
     await client.query("COMMIT");
   } catch(e) {
     await client.query("ROLLBACK");
+
     await unlink(destination).catch(()=>{});
+
     console.error(e);
-    return NextResponse.json({error:"server_error"},{status:500});
+
+    return NextResponse.json(
+      {error:"server_error"},
+      {status:500},
+    );
   } finally {
     client.release();
   }
 
-  if(previous!==filename)await removeStoredImage(previous);
+  if(previous!==filename) {
+    await removeStoredImage(previous);
+  }
 
   return NextResponse.json({
     ok:true,
@@ -181,6 +233,7 @@ export async function DELETE(req:NextRequest) {
   if(rateLimited)return rateLimited;
 
   const user=await currentUser();
+
   if(!user) {
     return NextResponse.json({error:"unauthorized"},{status:401});
   }
@@ -191,35 +244,56 @@ export async function DELETE(req:NextRequest) {
   try {
     await client.query("BEGIN");
 
-    const existing=await client.query<{profile_image_path:string|null}>(`
+    const existing=await client.query<{
+      profile_image_path:string|null;
+    }>(`
       SELECT profile_image_path
       FROM users
       WHERE id=$1
       FOR UPDATE
     `,[user.id]);
 
-    previous=existing.rows[0]?.profile_image_path??null;
+    previous=
+      existing.rows[0]?.profile_image_path??null;
 
     await client.query(`
       UPDATE users
-      SET profile_image_path=NULL,updated_at=now()
+      SET
+        profile_image_path=NULL,
+        updated_at=now()
       WHERE id=$1
     `,[user.id]);
 
     await client.query(`
-      INSERT INTO audit_log(user_id,action,entity_type,entity_id)
-      VALUES($1,'PROFILE_IMAGE_REMOVE','user',$1)
-    `,[user.id]);
+      INSERT INTO audit_log(
+        user_id,
+        action,
+        entity_type,
+        entity_id
+      )
+      VALUES(
+        $1,
+        'PROFILE_IMAGE_REMOVE',
+        'user',
+        $2
+      )
+    `,[user.id,user.id]);
 
     await client.query("COMMIT");
   } catch(e) {
     await client.query("ROLLBACK");
+
     console.error(e);
-    return NextResponse.json({error:"server_error"},{status:500});
+
+    return NextResponse.json(
+      {error:"server_error"},
+      {status:500},
+    );
   } finally {
     client.release();
   }
 
   await removeStoredImage(previous);
+
   return NextResponse.json({ok:true});
 }
