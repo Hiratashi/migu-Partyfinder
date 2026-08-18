@@ -54,18 +54,48 @@ const weeklySlotSchema=z.object({
     .refine(v=>v%30===0,"Time slots must use 30-minute increments"),
 });
 
-export const weeklyAvailabilitySchema=z.object({
-  raidSlug:z.string().trim().min(1).max(80),
-  encounters:z.array(z.string().uuid()).min(1).max(30),
-  characterIds:z.array(z.string().uuid()).min(1).max(30),
-  stages:z.array(z.number().int().min(1).max(99)).min(1).max(20)
-    .transform(v=>[...new Set(v)].sort((a,b)=>a-b)),
-  practiceOk:z.boolean(),
+
+export const globalAvailabilitySchema=z.object({
   timezone:z.string().trim().min(1).max(100),
   slots:z.array(weeklySlotSchema).max(336),
-  notes:z.string().trim().max(250).optional().default(""),
 });
 
+export const raidPreferenceSchema=z.object({
+  raidSlug:z.string().trim().min(1).max(80),
+  enabled:z.boolean(),
+  encounters:z.array(z.string().uuid()).max(30),
+  characterIds:z.array(z.string().uuid()).max(30),
+  stages:z.array(z.number().int().min(1).max(99)).max(20)
+    .transform(v=>[...new Set(v)].sort((a,b)=>a-b)),
+  practiceOk:z.boolean(),
+  notes:z.string().trim().max(250).optional().default(""),
+}).superRefine((v,ctx)=>{
+  if(!v.enabled)return;
+
+  if(v.encounters.length===0) {
+    ctx.addIssue({
+      code:"custom",
+      message:"Select at least one fight.",
+      path:["encounters"],
+    });
+  }
+
+  if(v.characterIds.length===0) {
+    ctx.addIssue({
+      code:"custom",
+      message:"Select at least one character.",
+      path:["characterIds"],
+    });
+  }
+
+  if(v.stages.length===0) {
+    ctx.addIssue({
+      code:"custom",
+      message:"Select at least one stage.",
+      path:["stages"],
+    });
+  }
+});
 export const characterSchema=z.object({
   classId:z.string().uuid(),
   characterName:z.string().trim().min(2).max(32),

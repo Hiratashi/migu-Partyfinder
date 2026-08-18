@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
-import WeeklyAvailabilityForm from "@/components/WeeklyAvailabilityForm";
+import GlobalAvailabilityForm from "@/components/GlobalAvailabilityForm";
+import RaidPreferencesForm from "@/components/RaidPreferencesForm";
+import RaidPreferenceTabs from "@/components/RaidPreferenceTabs";
 import {
   getActiveRaids,
   getRaidBySlug,
@@ -16,12 +17,15 @@ type C={
   role:string;
   icon_path:string|null;
 };
+
 type P={
   id:string;
+  enabled:boolean;
   stages:number[];
   practice_ok:boolean;
   notes:string|null;
 };
+
 type ID={id:string};
 type Slot={day_of_week:number;minute_of_day:number};
 
@@ -41,6 +45,13 @@ export default async function Availability({
     raids[0] ??
     null;
 
+  const globalSlots=await query<Slot>(`
+    SELECT day_of_week,minute_of_day
+    FROM availability_user_weekly_slots
+    WHERE user_id=$1
+    ORDER BY day_of_week,minute_of_day
+  `,[user.id]);
+
   const chars=await query<C>(`
     SELECT
       ch.id,
@@ -56,17 +67,31 @@ export default async function Availability({
     ORDER BY ch.character_name
   `,[user.id]);
 
+  const initialSlots=globalSlots.rows.map(s=>({
+    day:s.day_of_week,
+    minute:s.minute_of_day,
+  }));
+
   if(!selected) {
     return <main>
       <h1>Your availability</h1>
-      <div className="card muted">No active raids are configured.</div>
+      <p className="muted">
+        Set your usual weekly schedule once. It applies to every raid.
+      </p>
+
+      <GlobalAvailabilityForm initialSlots={initialSlots}/>
+
+      <div className="card muted">
+        No active raids are configured, so there are no raid preferences
+        to edit right now.
+      </div>
     </main>;
   }
 
   const encounters=await getRaidEncounters(selected.id);
 
   const profile=await query<P>(`
-    SELECT id,stages,practice_ok,notes
+    SELECT id,enabled,stages,practice_ok,notes
     FROM availability_profiles
     WHERE user_id=$1 AND raid_id=$2
     LIMIT 1
@@ -74,12 +99,12 @@ export default async function Availability({
 
   let initial:
     undefined|{
+      enabled:boolean;
       encounterIds:string[];
       characterIds:string[];
       stages:number[];
       practiceOk:boolean;
       notes:string;
-      slots:{day:number;minute:number}[];
     };
 
   if(profile.rowCount) {
@@ -89,62 +114,58 @@ export default async function Availability({
       "SELECT encounter_id id FROM availability_profile_encounters WHERE profile_id=$1",
       [id],
     );
+
     const pc=await query<ID>(
       "SELECT character_id id FROM availability_profile_characters WHERE profile_id=$1",
       [id],
     );
-    const ps=await query<Slot>(
-      "SELECT day_of_week,minute_of_day FROM availability_weekly_slots WHERE profile_id=$1 ORDER BY day_of_week,minute_of_day",
-      [id],
-    );
 
     initial={
+      enabled:profile.rows[0].enabled,
       encounterIds:pe.rows.map(x=>x.id),
       characterIds:pc.rows.map(x=>x.id),
       stages:profile.rows[0].stages.map(Number),
       practiceOk:profile.rows[0].practice_ok,
       notes:profile.rows[0].notes??"",
-      slots:ps.rows.map(s=>({
-        day:s.day_of_week,
-        minute:s.minute_of_day,
-      })),
     };
   }
 
   return <main>
     <h1>Your availability</h1>
     <p className="muted">
-      Your weekly schedule is stored separately for each raid.
+      Set your usual weekly schedule once, then choose which raids you
+      currently want to run.
     </p>
 
-    <div className="row raid-tabs">
-      {raids.map(raid=>
-        <Link
-          key={raid.id}
-          href={`/availability?raid=${encodeURIComponent(raid.slug)}`}
-          className={`btn ${raid.slug===selected.slug?"active-nav":""}`}
-        >
-          {raid.name}
-        </Link>
-      )}
-    </div>
+    <GlobalAvailabilityForm initialSlots={initialSlots}/>
 
-    {chars.rows.length
-      ? <WeeklyAvailabilityForm
-          key={selected.slug}
-          raidSlug={selected.slug}
-          raidName={selected.name}
-          encounters={encounters}
-          characters={chars.rows}
-          supportedStages={selected.supported_stages}
-          defaultStage={selected.default_stage}
-          practiceSupported={selected.practice_supported}
-          initial={initial}
-        />
-      : <div className="card">
-          Add at least one character in your profile before publishing
-          availability.
-        </div>
-    }
+    <section id="raid-preferences" className="stack raid-preferences-section">
+      <div>
+        <h2 style={{marginBottom:4}}>Raid preferences</h2>
+        <p className="muted" style={{marginTop:0}}>
+          Choose a raid to edit its participation settings.
+        </p>
+      </div>
+
+      <RaidPreferenceTabs
+        raids={raids.map(raid=>({
+          slug:raid.slug,
+          name:raid.name,
+        }))}
+        selectedSlug={selected.slug}
+      />
+
+      <RaidPreferencesForm
+      key={selected.slug}
+      raidSlug={selected.slug}
+      raidName={selected.name}
+      encounters={encounters}
+      characters={chars.rows}
+      supportedStages={selected.supported_stages}
+      defaultStage={selected.default_stage}
+      practiceSupported={selected.practice_supported}
+      initial={initial}
+    />
+    </section>
   </main>;
 }
