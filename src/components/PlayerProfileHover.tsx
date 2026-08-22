@@ -4,6 +4,15 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ClassIcon from "@/components/ClassIcon";
 
+type Capability={
+  id:string;
+  name:string;
+  category:"DAMAGE"|"GEAR"|"UTILITY"|"OTHER";
+  raid_id:string|null;
+  raid_name:string|null;
+  sort_order:number;
+};
+
 type Character={
   id:string;
   character_name:string;
@@ -12,6 +21,7 @@ type Character={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  capabilities:Capability[];
 };
 
 type AvailabilityRow={
@@ -387,11 +397,29 @@ export default function PlayerProfileHover({
                           name={character.name}
                         />
 
-                        <span>
+                        <span className="player-hover-character-copy">
                           <strong>{character.character_name}</strong>
                           <span className="muted">
                             {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
                           </span>
+
+                          {character.capabilities.length>0&&
+                            <span className="player-hover-capabilities">
+                              {character.capabilities.map(capability=>
+                                <span
+                                  className="player-hover-capability-tag"
+                                  key={capability.id}
+                                  title={
+                                    capability.raid_name
+                                      ? `${capability.raid_name} capability`
+                                      : "Global capability"
+                                  }
+                                >
+                                  {capability.name}
+                                </span>
+                              )}
+                            </span>
+                          }
                         </span>
                       </span>
                     )}

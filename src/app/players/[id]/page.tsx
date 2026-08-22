@@ -16,6 +16,17 @@ type Player={
   profile_image_path:string|null;
 };
 
+type Capability={
+  id:string;
+  character_id:string;
+  name:string;
+  category:"DAMAGE"|"GEAR"|"UTILITY"|"OTHER";
+  raid_id:string|null;
+  raid_name:string|null;
+  raid_sort_order:number|null;
+  sort_order:number;
+};
+
 type Character={
   id:string;
   character_name:string;
@@ -25,6 +36,13 @@ type Character={
   role:string;
   icon_path:string|null;
 };
+
+const categoryLabel={
+  DAMAGE:"Damage",
+  GEAR:"Gear",
+  UTILITY:"Utility",
+  OTHER:"Other",
+} as const;
 
 export default async function PlayerProfile({
   params,
@@ -53,21 +71,64 @@ export default async function PlayerProfile({
   const player=playerResult.rows[0];
   if(!player)notFound();
 
-  const characters=await query<Character>(`
-    SELECT
-      ch.id,
-      ch.character_name,
-      c.name,
-      c.abbreviation,
-      c.damage_type,
-      c.role,
-      c.icon_path
-    FROM characters ch
-    JOIN classes c ON c.id=ch.class_id
-    WHERE ch.user_id=$1
-      AND ch.archived_at IS NULL
-    ORDER BY ch.character_name
-  `,[id]);
+  const [characters,capabilities]=await Promise.all([
+    query<Character>(`
+      SELECT
+        ch.id,
+        ch.character_name,
+        c.name,
+        c.abbreviation,
+        c.damage_type,
+        c.role,
+        c.icon_path
+      FROM characters ch
+      JOIN classes c ON c.id=ch.class_id
+      WHERE ch.user_id=$1
+        AND ch.archived_at IS NULL
+      ORDER BY ch.character_name
+    `,[id]),
+    query<Capability>(`
+      SELECT
+        ct.id,
+        cc.character_id,
+        ct.name,
+        ct.category,
+        ct.raid_id,
+        r.name raid_name,
+        r.sort_order raid_sort_order,
+        ct.sort_order
+      FROM character_capabilities cc
+      JOIN capability_tags ct
+        ON ct.id=cc.capability_tag_id
+      JOIN characters ch
+        ON ch.id=cc.character_id
+      LEFT JOIN raids r
+        ON r.id=ct.raid_id
+      WHERE ch.user_id=$1
+        AND ch.archived_at IS NULL
+        AND ct.active=true
+      ORDER BY
+        cc.character_id,
+        CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+        COALESCE(r.sort_order,0),
+        ct.sort_order,
+        ct.name
+    `,[id]),
+  ]);
+
+  const capabilitiesByCharacter=new Map<string,Capability[]>();
+
+  for(const capability of capabilities.rows) {
+    const current=capabilitiesByCharacter.get(
+      capability.character_id,
+    )??[];
+
+    current.push(capability);
+    capabilitiesByCharacter.set(
+      capability.character_id,
+      current,
+    );
+  }
 
   const displayName=player.display_name??player.username;
   const imageUrl=player.profile_image_path
@@ -114,9 +175,33 @@ export default async function PlayerProfile({
             This player has no active characters.
           </div>
         : <div className="grid public-profile-character-grid">
-            {characters.rows.map(character=>
-              <article
-                className="public-profile-character"
+            {characters.rows.map(character=>{
+              const assigned=
+                capabilitiesByCharacter.get(character.id)??[];
+
+              const global=assigned.filter(
+                capability=>capability.raid_id===null,
+              );
+
+              const raidGroups=new Map<string,{
+                name:string;
+                items:Capability[];
+              }>();
+
+              for(const capability of assigned) {
+                if(!capability.raid_id)continue;
+
+                const group=raidGroups.get(capability.raid_id)??{
+                  name:capability.raid_name??"Raid",
+                  items:[],
+                };
+
+                group.items.push(capability);
+                raidGroups.set(capability.raid_id,group);
+              }
+
+              return <article
+                className="public-profile-character public-profile-character-with-capabilities"
                 key={character.id}
               >
                 <ClassIcon
@@ -131,11 +216,58 @@ export default async function PlayerProfile({
                   </strong>
 
                   <div className="muted">
-                    {character.name} · {character.damage_type} · {character.role}
+                    {character.name} &middot; {character.damage_type} &middot; {character.role}
                   </div>
+
+                  {assigned.length>0&&
+                    <div className="public-character-capabilities">
+                      {global.length>0&&
+                        <div className="public-character-capability-group">
+                          <span className="public-character-capability-scope">
+                            Global
+                          </span>
+
+                          <div className="public-character-capability-tags">
+                            {global.map(capability=>
+                              <span
+                                className="public-character-capability-tag"
+                                key={capability.id}
+                                title={categoryLabel[capability.category]}
+                              >
+                                {capability.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      }
+
+                      {[...raidGroups.entries()].map(([raidId,group])=>
+                        <div
+                          className="public-character-capability-group"
+                          key={raidId}
+                        >
+                          <span className="public-character-capability-scope">
+                            {group.name}
+                          </span>
+
+                          <div className="public-character-capability-tags">
+                            {group.items.map(capability=>
+                              <span
+                                className="public-character-capability-tag"
+                                key={capability.id}
+                                title={categoryLabel[capability.category]}
+                              >
+                                {capability.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  }
                 </div>
-              </article>
-            )}
+              </article>;
+            })}
           </div>
       }
     </section>

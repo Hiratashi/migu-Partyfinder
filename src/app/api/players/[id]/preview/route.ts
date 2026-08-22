@@ -27,6 +27,16 @@ type Player={
   timezone:string;
 };
 
+type Capability={
+  id:string;
+  character_id:string;
+  name:string;
+  category:"DAMAGE"|"GEAR"|"UTILITY"|"OTHER";
+  raid_id:string|null;
+  raid_name:string|null;
+  sort_order:number;
+};
+
 type Character={
   id:string;
   character_name:string;
@@ -35,6 +45,7 @@ type Character={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  capabilities?:Capability[];
 };
 
 export async function GET(
@@ -145,8 +156,65 @@ export async function GET(
         ORDER BY ch.character_name
       `,[id]);
 
-  const [characters,slots]=await Promise.all([
+  const capabilityQuery=raidId
+    ? query<Capability>(`
+        SELECT
+          ct.id,
+          cc.character_id,
+          ct.name,
+          ct.category,
+          ct.raid_id,
+          r.name raid_name,
+          ct.sort_order
+        FROM character_capabilities cc
+        JOIN capability_tags ct
+          ON ct.id=cc.capability_tag_id
+        JOIN characters ch
+          ON ch.id=cc.character_id
+        LEFT JOIN raids r
+          ON r.id=ct.raid_id
+        WHERE ch.user_id=$1
+          AND ch.archived_at IS NULL
+          AND ct.active=true
+          AND (
+            ct.raid_id IS NULL
+            OR ct.raid_id=$2
+          )
+        ORDER BY
+          cc.character_id,
+          CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+          ct.sort_order,
+          ct.name
+      `,[id,raidId])
+    : query<Capability>(`
+        SELECT
+          ct.id,
+          cc.character_id,
+          ct.name,
+          ct.category,
+          ct.raid_id,
+          r.name raid_name,
+          ct.sort_order
+        FROM character_capabilities cc
+        JOIN capability_tags ct
+          ON ct.id=cc.capability_tag_id
+        JOIN characters ch
+          ON ch.id=cc.character_id
+        LEFT JOIN raids r
+          ON r.id=ct.raid_id
+        WHERE ch.user_id=$1
+          AND ch.archived_at IS NULL
+          AND ct.active=true
+        ORDER BY
+          cc.character_id,
+          CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+          ct.sort_order,
+          ct.name
+      `,[id]);
+
+  const [characters,capabilities,slots]=await Promise.all([
     characterQuery,
+    capabilityQuery,
     query<PublicWeeklySlot>(`
       SELECT day_of_week,minute_of_day
       FROM availability_user_weekly_slots
@@ -154,6 +222,26 @@ export async function GET(
       ORDER BY day_of_week,minute_of_day
     `,[id]),
   ]);
+
+  const capabilitiesByCharacter=new Map<string,Capability[]>();
+
+  for(const capability of capabilities.rows) {
+    const current=capabilitiesByCharacter.get(
+      capability.character_id,
+    )??[];
+
+    current.push(capability);
+    capabilitiesByCharacter.set(
+      capability.character_id,
+      current,
+    );
+  }
+
+  const previewCharacters=characters.rows.map(character=>({
+    ...character,
+    capabilities:
+      capabilitiesByCharacter.get(character.id)??[],
+  }));
 
   const availability=availabilityRangesForViewer(
     slots.rows,
@@ -173,7 +261,7 @@ export async function GET(
     displayName,
     username:player.username,
     profileImageUrl,
-    characters:characters.rows,
+    characters:previewCharacters,
     availability,
   });
 }
