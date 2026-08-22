@@ -2486,3 +2486,49 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
   padding:2px 6px;
   font-size:.68rem;
 }
+
+/* Professional Available players character rows */
+.available-player-character-list {
+  display:grid;
+  gap:8px;
+}
+
+.available-player-character {
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#10131a;
+}
+
+.available-player-character-copy {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.available-player-character-copy strong,
+.available-player-character-copy .muted {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.available-player-character-capabilities {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:3px;
+}
+
+@media(min-width:760px) {
+  .available-player-character-list {
+    grid-template-columns:repeat(
+      auto-fit,
+      minmax(min(280px,100%),1fr)
+    );
+  }
+}

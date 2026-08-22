@@ -83,6 +83,7 @@ type MatchCharacter={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path:string|null;
   capabilities:MatchCapability[];
 };
 
@@ -306,6 +307,7 @@ export default async function PartyPage({
                 'abbreviation',c.abbreviation,
                 'damage_type',c.damage_type,
                 'role',c.role,
+                'icon_path',c.icon_path,
                 'capabilities',COALESCE((
                   SELECT jsonb_agg(
                     jsonb_build_object(
@@ -563,31 +565,42 @@ export default async function PartyPage({
                 raidId={party.raid_id}
               />
             </div>
-            <span className="muted">
-              {m.fittingCharacters.map(
-                c=>`${c.name} (${c.abbreviation}, ${c.damage_type} ${c.role})`,
-              ).join(", ")}
-            </span>
+            <div className="available-player-character-list">
+              {m.fittingCharacters.map(character=>
+                <div
+                  className="available-player-character"
+                  key={character.id}
+                >
+                  <ClassIcon
+                    src={character.icon_path}
+                    abbreviation={character.abbreviation}
+                    name={character.name}
+                  />
 
-            {m.fittingCapabilities.length>0&&
-              <div className="row">
-                <span className="muted">Capabilities:</span>
-                {m.fittingCapabilities.map(capability=>
-                  <span
-                    className="public-character-capability-tag"
-                    key={capability.id}
-                  >
-                    {capability.name}
-                  </span>
-                )}
-              </div>
-            }
+                  <div className="available-player-character-copy">
+                    <strong>{character.name}</strong>
 
-            <div className="row">
-              {m.hasPhysical&&<span className="pill">Physical</span>}
-              {m.hasMagical&&<span className="pill">Magical</span>}
-              {m.hasSupport&&<span className="pill">Support</span>}
+                    <div className="muted">
+                      {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
+                    </div>
+
+                    {(character.capabilities??[]).length>0&&
+                      <div className="available-player-character-capabilities">
+                        {character.capabilities.map(capability=>
+                          <span
+                            className="public-character-capability-tag"
+                            key={capability.id}
+                          >
+                            {capability.name}
+                          </span>
+                        )}
+                      </div>
+                    }
+                  </div>
+                </div>
+              )}
             </div>
+
             {m.notes&&<span>{m.notes}</span>}
             <MatchInviteButton partyId={id} userId={m.user_id}/>
           </article>
