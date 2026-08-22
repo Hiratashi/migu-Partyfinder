@@ -6,7 +6,7 @@ export default function AdminSectionToolbar({
   actionHref,
   actionLabel,
 }:{
-  current:"dashboard"|"users"|"raids"|"classes"|"parties"|"audit";
+  current:"dashboard"|"users"|"raids"|"classes"|"capabilities"|"parties"|"audit";
   actionHref?:string;
   actionLabel?:string;
 }) {

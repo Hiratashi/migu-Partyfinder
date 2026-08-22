@@ -12,6 +12,8 @@ type Counts={
   active_raids:number;
   classes:number;
   active_classes:number;
+  capabilities:number;
+  active_capabilities:number;
   active_parties:number;
   open_parties:number;
   full_parties:number;
@@ -76,6 +78,12 @@ export default async function AdminDashboardPage() {
         FROM classes
         WHERE active=true
       ) active_classes,
+      (SELECT COUNT(*)::int FROM capability_tags) capabilities,
+      (
+        SELECT COUNT(*)::int
+        FROM capability_tags
+        WHERE active=true
+      ) active_capabilities,
       (
         SELECT COUNT(*)::int
         FROM parties
@@ -143,6 +151,12 @@ export default async function AdminDashboardPage() {
         <span className="muted">Classes</span>
         <strong>{c.active_classes}</strong>
         <small>{c.active_classes} active - {c.classes} total</small>
+      </Link>
+
+      <Link className="card admin-dashboard-stat" href="/admin/capabilities">
+        <span className="muted">Capabilities</span>
+        <strong>{c.active_capabilities}</strong>
+        <small>{c.active_capabilities} active - {c.capabilities} total</small>
       </Link>
 
       <Link className="card admin-dashboard-stat" href="/admin/parties">

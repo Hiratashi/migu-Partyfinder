@@ -97,6 +97,7 @@ export async function DELETE(
     name:string;
     party_refs:number;
     availability_refs:number;
+    capability_refs:number;
   }>(`
     SELECT
       r.name,
@@ -105,7 +106,12 @@ export async function DELETE(
         SELECT COUNT(*)::int
         FROM availability_profiles ap
         WHERE ap.raid_id=r.id
-      ) availability_refs
+      ) availability_refs,
+      (
+        SELECT COUNT(*)::int
+        FROM capability_tags ct
+        WHERE ct.raid_id=r.id
+      ) capability_refs
     FROM raids r
     WHERE r.id=$1
   `,[id]);
@@ -116,15 +122,20 @@ export async function DELETE(
 
   const current=usage.rows[0];
 
-  if(current.party_refs>0||current.availability_refs>0) {
+  if(
+    current.party_refs>0||
+    current.availability_refs>0||
+    current.capability_refs>0
+  ) {
     return NextResponse.json(
       {
         error:"raid_in_use",
         message:
           `This raid cannot be deleted because it has `+
           `${current.party_refs} party reference(s) and `+
-          `${current.availability_refs} availability profile reference(s). `+
-          `Deactivate it instead so history stays intact.`,
+          `${current.availability_refs} availability profile reference(s), and `+
+          `${current.capability_refs} capability reference(s). `+
+          `Remove or re-scope those references, or deactivate the raid instead.`,
       },
       {status:409},
     );
