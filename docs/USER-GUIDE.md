@@ -12,7 +12,7 @@ Partyfinder uses Discord to identify you and verify that you belong to the confi
 
 If your guild access changes, Partyfinder may disable access automatically.
 
-## 2. Set up your characters
+## 2. Set up your profile and characters
 
 Open **Account → Profile & characters**.
 
@@ -20,13 +20,54 @@ Add the Elsword characters you may use for raids. Each character has:
 
 - an in-game character name
 - a class
-- the role/attack-type information associated with that class.
+- the role/attack-type information associated with that class
+- optional armor setup
+- optional capability tags.
 
 Your in-game character name can be copied with one click. This is useful when searching or inviting players in Elsword.
 
+Character cards are compact by default. Use **Manage details** to expand a character and configure its armor or capabilities.
+
 Keep your character list current so Partyfinder can determine which parties you can join.
 
-## 3. Set your availability
+Your profile and character information may also be shown to other Partyfinder users on your public profile and in party-related profile previews.
+
+## 3. Configure armor
+
+Inside a character's **Manage details** view, you can optionally configure its armor set.
+
+Available armor setups are:
+
+- **Tenebrous**
+- **Exascale**
+  - Red
+  - Blue
+  - Green
+- **Not specified**
+
+Tenebrous and Exascale are mutually exclusive. If you select Exascale, choose the appropriate Exascale color.
+
+You can return later and change the armor setup at any time.
+
+## 4. Configure capabilities
+
+Inside the same character details view, you can select capability tags that describe useful information about that character.
+
+Capabilities may be:
+
+- global
+- specific to a raid
+- grouped into categories such as Damage, Gear, Utility or Other.
+
+For example, a raid-specific capability may communicate that a character is suitable for a particular responsibility.
+
+**Doom Damage Ready** is self-declared. Select it only when you are confident that character can be relied on as one of the party's primary damage dealers in Doom Aporia and can carry a meaningful share of the group's damage.
+
+Capabilities are informational. They do not override normal party matching, eligibility or composition requirements.
+
+Capability definitions are maintained by administrators and may be adjusted later. Names, descriptions, categories, raid scope, active state and display order can change without requiring users to recreate their characters.
+
+## 5. Set your availability
 
 Open **Account → Availability**.
 
@@ -44,7 +85,7 @@ You can also save raid-related preferences such as:
 
 You can return later and change your availability.
 
-## 4. Browse parties
+## 6. Browse parties
 
 The main page shows upcoming open parties.
 
@@ -60,7 +101,7 @@ A party can include information such as:
 
 Open a party to see the full details.
 
-## 5. Create a party
+## 7. Create a party
 
 Choose **+ Create Party**.
 
@@ -76,7 +117,7 @@ Depending on the raid configuration, you can choose things such as:
 
 After creating the party, it appears for eligible guild members.
 
-## 6. Join a party
+## 8. Join a party
 
 Open the party you want to join and choose one of your eligible characters.
 
@@ -86,17 +127,29 @@ If the leader has restricted party composition, some characters may not currentl
 
 You can change your selected character later where supported.
 
-## 7. Invitations
+## 9. Invitations and preferred characters
 
 Party leaders can invite eligible Partyfinder users.
 
 Invitations appear in Partyfinder and can be accepted or declined.
 
+When sending an invitation from **Available players**, the party lead may optionally select one or more characters as preferred choices.
+
+A preferred character is only a suggestion:
+
+- the lead may select no preferred character
+- one or multiple characters may be preferred
+- the invited player sees which characters were preferred
+- preferred characters are shown first in the invitation character picker
+- the invited player may still choose any character that satisfies the normal party requirements.
+
+Preferred characters do not change matching, eligibility, role requirements or party composition rules.
+
 If you accept an invitation, choose an eligible character for that party.
 
 A leader may revoke an invitation before it is accepted.
 
-## 8. My Parties
+## 10. My Parties
 
 Use **My Parties** to manage parties that involve you.
 
@@ -111,7 +164,9 @@ Depending on your role in the party, actions can include:
 - completing the party
 - cancelling it
 
-## 9. Party status and history
+Pending invitations may also show the party lead's preferred character choices.
+
+## 11. Party status and history
 
 Parties move through lifecycle states.
 
@@ -125,29 +180,39 @@ Examples include:
 
 Past parties can be reviewed through **History**.
 
-## 10. Times and timezones
+## 12. Times and timezones
 
 Partyfinder is designed for guild members in different timezones.
 
 Times shown in the interface are converted for the viewer where applicable. Always double-check the displayed date/time before committing to a raid.
 
-## 11. Admin-only pages
+## 13. Admin-only pages
 
 Administrators have additional tools for:
 
 - users
 - raids
 - classes
+- capabilities
 - active-party moderation
 - audit logs
 
+The capability administration page allows capability definitions to be added or adjusted later, including:
+
+- name
+- description
+- category
+- raid scope
+- active/inactive state
+- display order.
+
 Normal users do not need these pages.
 
-## 12. Reporting a problem
+## 14. Reporting a problem
 
 This is a beta. If something behaves incorrectly, please open a GitHub Issue:
 
-https://github.com/Hiratashi/migu-s-Partyfinder/issues
+https://github.com/Hiratashi/migu-Partyfinder/issues
 
 For bugs, include:
 
@@ -160,7 +225,7 @@ For bugs, include:
 
 Do **not** post passwords, tokens, cookies, `.env` contents or private credentials.
 
-## 13. Suggesting improvements
+## 15. Suggesting improvements
 
 Feature and UX suggestions are welcome through GitHub Issues as well.
 

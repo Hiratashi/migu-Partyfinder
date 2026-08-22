@@ -31,6 +31,12 @@ export default function AdminBackNav({
       Classes
     </Link>
     <Link
+      className={current==="capabilities"?"active":""}
+      href="/admin/capabilities"
+    >
+      Capabilities
+    </Link>
+    <Link
       className={current==="parties"?"active":""}
       href="/admin/parties"
     >

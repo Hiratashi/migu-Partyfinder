@@ -29,6 +29,7 @@ type Row={
   assigned_magical:number;
   assigned_support:number;
   composition_restricted:boolean;
+  preferred_characters:string|null;
 };
 
 export default async function MyParties() {
@@ -52,6 +53,16 @@ export default async function MyParties() {
       p.need_magical,
       p.need_support,
       p.composition_restricted,
+      (
+        SELECT string_agg(
+          ch_pref.character_name,
+          ', ' ORDER BY ch_pref.character_name
+        )
+        FROM party_invitation_preferred_characters pipc
+        JOIN characters ch_pref ON ch_pref.id=pipc.character_id
+        WHERE pipc.party_id=p.id
+          AND pipc.user_id=$1
+      ) preferred_characters,
       string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
       mine.status member_status,
       mine_ch.character_name,
@@ -184,6 +195,14 @@ export default async function MyParties() {
       "You have no pending invitations.",
       p=><div className="stack" key={p.id}>
         {card(p,"Invited","Review invitation")}
+        {p.preferred_characters&&
+          <div className="preferred-character-notice">
+            <strong>Party lead prefers: {p.preferred_characters}</strong>
+            <span className="muted">
+              This is only a preference. You can still choose any eligible character.
+            </span>
+          </div>
+        }
         <InvitationActions partyId={p.id} showView={false}/>
       </div>,
     )}

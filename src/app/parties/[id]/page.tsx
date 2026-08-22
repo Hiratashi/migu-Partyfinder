@@ -6,7 +6,7 @@ import InviteUser from "@/components/InviteUser";
 import LocalDateTime from "@/components/LocalDateTime";
 import PartyActions from "@/components/PartyActions";
 import KickMemberButton from "@/components/KickMemberButton";
-import MatchInviteButton from "@/components/MatchInviteButton";
+import AvailablePlayerInviteCard from "@/components/AvailablePlayerInviteCard";
 import CompositionRestrictionToggle from "@/components/CompositionRestrictionToggle";
 import ChangeCharacter from "@/components/ChangeCharacter";
 import ClassIcon from "@/components/ClassIcon";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/weekly-availability";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import CopyCharacterName from "@/components/CopyCharacterName";
+import PlayerProfileHover from "@/components/PlayerProfileHover";
 
 type P={
   id:string;
@@ -68,6 +69,13 @@ type PendingInvite={
   user_id:string;
   display:string;
   username:string;
+  preferred_characters:string|null;
+};
+
+type MatchCapability={
+  id:string;
+  name:string;
+  raid_id:string|null;
 };
 
 type MatchCharacter={
@@ -76,6 +84,10 @@ type MatchCharacter={
   abbreviation:string;
   damage_type:string;
   role:string;
+  icon_path:string|null;
+  armor_type:"TENEBROUS"|"EXASCALE"|null;
+  exascale_color:"RED"|"BLUE"|"GREEN"|null;
+  capabilities:MatchCapability[];
 };
 
 type RawProfile={
@@ -192,6 +204,19 @@ export default async function PartyPage({
   const membershipStatus=membership.rows[0]?.status??null;
   const isMember=membershipStatus==="ACCEPTED";
   const isInvited=membershipStatus==="INVITED";
+
+  const preferredCharacterRows=isInvited
+    ? await query<{character_id:string}>(`
+        SELECT character_id
+        FROM party_invitation_preferred_characters
+        WHERE party_id=$1 AND user_id=$2
+        ORDER BY created_at,character_id
+      `,[id,user.id])
+    : {rows:[] as {character_id:string}[]};
+
+  const preferredCharacterIds=preferredCharacterRows.rows.map(
+    row=>row.character_id,
+  );
   const canManage=
     party.leader_id===user.id &&
     ["OPEN","FULL"].includes(party.status);
@@ -246,7 +271,17 @@ export default async function PartyPage({
         SELECT
           pm.user_id,
           COALESCE(u.display_name,u.username) display,
-          u.username
+          u.username,
+          (
+            SELECT string_agg(
+              ch_pref.character_name,
+              ', ' ORDER BY ch_pref.character_name
+            )
+            FROM party_invitation_preferred_characters pipc
+            JOIN characters ch_pref ON ch_pref.id=pipc.character_id
+            WHERE pipc.party_id=pm.party_id
+              AND pipc.user_id=pm.user_id
+          ) preferred_characters
         FROM party_members pm
         JOIN users u ON u.id=pm.user_id
         WHERE pm.party_id=$1
@@ -297,7 +332,32 @@ export default async function PartyPage({
                 'name',ch.character_name,
                 'abbreviation',c.abbreviation,
                 'damage_type',c.damage_type,
-                'role',c.role
+                'role',c.role,
+                'icon_path',c.icon_path,
+                'armor_type',ch.armor_type,
+                'exascale_color',ch.exascale_color,
+                'capabilities',COALESCE((
+                  SELECT jsonb_agg(
+                    jsonb_build_object(
+                      'id',ct.id,
+                      'name',ct.name,
+                      'raid_id',ct.raid_id
+                    )
+                    ORDER BY
+                      CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+                      ct.sort_order,
+                      ct.name
+                  )
+                  FROM character_capabilities cc
+                  JOIN capability_tags ct
+                    ON ct.id=cc.capability_tag_id
+                  WHERE cc.character_id=ch.id
+                    AND ct.active=true
+                    AND (
+                      ct.raid_id IS NULL
+                      OR ct.raid_id=ap.raid_id
+                    )
+                ),'[]'::jsonb)
               )
               ORDER BY ch.character_name
             )
@@ -365,9 +425,20 @@ export default async function PartyPage({
 
     if(!fitting.length)return [];
 
+    const capabilityMap=new Map<string,MatchCapability>();
+
+    for(const character of fitting) {
+      for(const capability of character.capabilities??[]) {
+        capabilityMap.set(capability.id,capability);
+      }
+    }
+
+    const fittingCapabilities=[...capabilityMap.values()];
+
     return [{
       ...profile,
       fittingCharacters:fitting,
+      fittingCapabilities,
       hasPhysical:fitting.some(
         c=>c.damage_type==="PHYSICAL"&&["DPS","FLEX"].includes(c.role),
       ),
@@ -459,6 +530,7 @@ export default async function PartyPage({
               partyId={id}
               characters={userCharacters}
               invited={isInvited}
+              preferredCharacterIds={preferredCharacterIds}
             />
           : <div className="card muted">
               This party is currently full.
@@ -480,6 +552,11 @@ export default async function PartyPage({
               <strong>{invite.display}</strong>{" "}
               <span className="muted">@{invite.username}</span>
               <div className="muted">Waiting for a response</div>
+              <div className="muted">
+                {invite.preferred_characters
+                  ? `Preferred: ${invite.preferred_characters}`
+                  : "No character preference"}
+              </div>
             </div>
             <RevokeInvitationButton
               partyId={id}
@@ -513,24 +590,16 @@ export default async function PartyPage({
         }
 
         {matches.map(m=>
-          <article className="card stack" key={m.user_id}>
-            <div>
-              <strong>{m.display}</strong>{" "}
-              <span className="muted">@{m.username}</span>
-            </div>
-            <span className="muted">
-              {m.fittingCharacters.map(
-                c=>`${c.name} (${c.abbreviation}, ${c.damage_type} ${c.role})`,
-              ).join(", ")}
-            </span>
-            <div className="row">
-              {m.hasPhysical&&<span className="pill">Physical</span>}
-              {m.hasMagical&&<span className="pill">Magical</span>}
-              {m.hasSupport&&<span className="pill">Support</span>}
-            </div>
-            {m.notes&&<span>{m.notes}</span>}
-            <MatchInviteButton partyId={id} userId={m.user_id}/>
-          </article>
+          <AvailablePlayerInviteCard
+            key={m.user_id}
+            partyId={id}
+            raidId={party.raid_id}
+            userId={m.user_id}
+            display={m.display}
+            username={m.username}
+            notes={m.notes}
+            characters={m.fittingCharacters}
+          />
         )}
       </div>
     </>}
@@ -554,8 +623,12 @@ export default async function PartyPage({
                 name={m.character_name??undefined}
               />
               <div>
-                <strong>{m.display}</strong>{" "}
-                <span className="muted">@{m.username}</span>
+                <PlayerProfileHover
+                  userId={m.user_id}
+                  display={m.display}
+                  username={m.username}
+                  raidId={party.raid_id}
+                />
                 <div className="muted">
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
                   {m.damage_type?` - ${m.damage_type} ${m.role}`:""}

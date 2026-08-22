@@ -20,19 +20,47 @@ export default function JoinParty({
   partyId,
   characters,
   invited=false,
+  preferredCharacterIds=[],
 }:{
   partyId:string;
   characters:Char[];
   invited?:boolean;
+  preferredCharacterIds?:string[];
 }) {
   const router=useRouter();
-  const first=characters.find(c=>c.eligible!==false)?.id??"";
+
+  const preferredSet=useMemo(
+    ()=>new Set(preferredCharacterIds),
+    [preferredCharacterIds],
+  );
+
+  const sortedCharacters=useMemo(
+    ()=>characters
+      .map((character,index)=>({character,index}))
+      .sort((a,b)=>{
+        const aPreferred=preferredSet.has(a.character.id)?0:1;
+        const bPreferred=preferredSet.has(b.character.id)?0:1;
+        if(aPreferred!==bPreferred)return aPreferred-bPreferred;
+        return a.index-b.index;
+      })
+      .map(x=>x.character),
+    [characters,preferredSet],
+  );
+
+  const first=sortedCharacters.find(c=>c.eligible!==false)?.id??"";
   const [characterId,setCharacterId]=useState(first);
   const [msg,setMsg]=useState("");
 
   const selected=useMemo(
     ()=>characters.find(c=>c.id===characterId)??null,
     [characters,characterId],
+  );
+
+  const preferredNames=useMemo(
+    ()=>sortedCharacters
+      .filter(c=>preferredSet.has(c.id))
+      .map(c=>c.character_name),
+    [sortedCharacters,preferredSet],
   );
 
   async function join() {
@@ -43,7 +71,11 @@ export default function JoinParty({
 
     setMsg("Joining...");
 
-    const r=await fetch(`/api/parties/${partyId}/join`,{
+    const endpoint=invited
+      ? `/api/invitations/${partyId}/accept`
+      : `/api/parties/${partyId}/join`;
+
+    const r=await fetch(endpoint,{
       method:"POST",
       headers:{"content-type":"application/json"},
       body:JSON.stringify({characterId}),
@@ -69,6 +101,17 @@ export default function JoinParty({
   return <div className="stack">
     <strong>{invited?"You were invited to this party":"Join this party"}</strong>
 
+    {invited&&preferredNames.length>0&&
+      <div className="preferred-character-notice">
+        <strong>
+          Party lead prefers: {preferredNames.join(", ")}
+        </strong>
+        <span className="muted">
+          This is only a preference. You can still choose any eligible character.
+        </span>
+      </div>
+    }
+
     <div className="character-picker-row">
       {selected
         ? <ClassIcon
@@ -86,12 +129,13 @@ export default function JoinParty({
       >
         <option value="">Choose a character</option>
 
-        {characters.map(c=>
+        {sortedCharacters.map(c=>
           <option
             key={c.id}
             value={c.id}
             disabled={c.eligible===false}
           >
+            {preferredSet.has(c.id)?"[Preferred] ":""}
             {c.character_name} - {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
             {c.eligible===false
               ? ` - ${c.reason??"not currently needed"}`
@@ -109,6 +153,12 @@ export default function JoinParty({
         Join party
       </button>
     </div>
+
+    {selected&&preferredSet.has(selected.id)&&
+      <span className="pill preferred-character-pill">
+        Preferred by party lead
+      </span>
+    }
 
     {msg&&<span className="muted">{msg}</span>}
   </div>;

@@ -1749,3 +1749,1088 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Player profile self-management */
+.profile-identity-card {
+  display:grid;
+  grid-template-columns:160px minmax(0,1fr);
+  gap:24px;
+  align-items:center;
+  margin-top:20px;
+}
+
+.profile-avatar-wrap {
+  display:grid;
+  place-items:center;
+}
+
+.profile-avatar {
+  width:144px;
+  height:144px;
+  border-radius:24px;
+  object-fit:cover;
+  display:block;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  box-shadow:0 10px 28px #0006;
+}
+
+.profile-avatar-fallback {
+  display:grid;
+  place-items:center;
+  font-size:3rem;
+  font-weight:800;
+  color:var(--muted);
+}
+
+.profile-identity-copy {
+  min-width:0;
+  display:grid;
+  gap:14px;
+}
+
+.profile-identity-copy h2 {
+  margin:3px 0 2px;
+  overflow-wrap:anywhere;
+}
+
+.profile-image-help {
+  margin:0;
+  max-width:680px;
+  line-height:1.55;
+}
+
+.profile-image-input {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  clip-path:inset(50%);
+}
+
+.profile-image-actions {
+  align-items:stretch;
+}
+
+.profile-character-section {
+  margin-top:34px;
+}
+
+.profile-character-section .section-title {
+  margin:0 0 8px;
+}
+
+.profile-character-section .profile-section-heading p {
+  margin:0 0 16px;
+  max-width:760px;
+}
+
+.profile-character-grid {
+  margin-top:18px;
+}
+
+@media(max-width:680px) {
+  .profile-identity-card {
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+
+  .profile-image-actions {
+    justify-content:center;
+  }
+
+  .profile-image-actions .btn {
+    flex:1 1 180px;
+  }
+}
+
+/* Public player profiles */
+.public-player-profile {
+  display:grid;
+  gap:20px;
+}
+
+.public-profile-hero {
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+
+.public-profile-avatar {
+  width:128px;
+  height:128px;
+}
+
+.public-profile-identity {
+  min-width:0;
+}
+
+.public-profile-identity h1 {
+  margin:4px 0 4px;
+  overflow-wrap:anywhere;
+}
+
+.public-profile-section {
+  display:grid;
+  gap:16px;
+}
+
+.public-profile-section-header h2 {
+  margin:4px 0 0;
+}
+
+.public-profile-character-grid {
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+}
+
+.public-profile-character {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--panel2);
+}
+
+.public-profile-character-copy {
+  min-width:0;
+}
+
+.public-profile-character-copy strong,
+.public-profile-character-copy .muted {
+  overflow-wrap:anywhere;
+}
+
+.public-availability-note {
+  margin:0;
+  max-width:760px;
+}
+
+.public-availability-list {
+  display:grid;
+  gap:10px;
+}
+
+.public-availability-row {
+  display:grid;
+  grid-template-columns:120px minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  padding:10px 0;
+  border-top:1px solid var(--border);
+}
+
+.public-availability-row:first-child {
+  border-top:0;
+}
+
+.public-availability-ranges {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+@media(max-width:680px) {
+  .public-profile-hero {
+    flex-direction:column;
+    text-align:center;
+  }
+
+  .public-availability-row {
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .public-availability-ranges {
+    justify-content:flex-start;
+  }
+}
+
+/* Party member player profile hover cards */
+.player-hover {
+  position:relative;
+  display:inline-block;
+}
+
+.player-hover-trigger {
+  appearance:none;
+  border:0;
+  background:none;
+  padding:0;
+  margin:0;
+  color:inherit;
+  font:inherit;
+  cursor:pointer;
+  text-align:left;
+}
+
+.player-hover-trigger:hover strong,
+.player-hover-trigger:focus-visible strong {
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+
+.player-hover-trigger:focus-visible {
+  outline:2px solid currentColor;
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+.player-hover-card {
+  position:absolute;
+  z-index:50;
+  top:calc(100% + 10px);
+  left:0;
+  width:min(380px,calc(100vw - 32px));
+  display:grid;
+  gap:14px;
+  padding:16px;
+  text-align:left;
+  box-shadow:0 18px 48px #000a;
+}
+
+.player-hover-card::before {
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:-12px;
+  height:12px;
+}
+
+.player-hover-header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.player-hover-avatar {
+  width:56px;
+  height:56px;
+  flex:0 0 56px;
+  border-radius:14px;
+  object-fit:cover;
+  background:var(--panel2);
+  border:1px solid var(--border);
+}
+
+.player-hover-avatar-fallback {
+  display:grid;
+  place-items:center;
+  font-size:1.35rem;
+  font-weight:800;
+  color:var(--muted);
+}
+
+.player-hover-identity {
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+
+.player-hover-identity strong,
+.player-hover-identity span {
+  overflow-wrap:anywhere;
+}
+
+.player-hover-section {
+  display:grid;
+  gap:8px;
+}
+
+.player-hover-characters,
+.player-hover-availability {
+  display:grid;
+  gap:8px;
+}
+
+.player-hover-character {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:8px;
+  align-items:center;
+}
+
+.player-hover-character > span:last-child {
+  display:grid;
+  gap:1px;
+  min-width:0;
+}
+
+.player-hover-character strong,
+.player-hover-character .muted {
+  overflow-wrap:anywhere;
+}
+
+.player-hover-availability-row {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+}
+
+.player-hover-profile-link {
+  justify-self:start;
+}
+
+@media(max-width:680px) {
+  .player-hover-card {
+    position:fixed;
+    left:16px;
+    right:16px;
+    top:auto;
+    bottom:16px;
+    width:auto;
+    max-height:70vh;
+    overflow:auto;
+  }
+
+  .player-hover-card::before {
+    display:none;
+  }
+}
+
+/* Auto-flip placement for party member hover cards */
+.player-hover-card-below {
+  top:calc(100% + 10px);
+  bottom:auto;
+}
+
+.player-hover-card-above {
+  top:auto;
+  bottom:calc(100% + 10px);
+}
+
+.player-hover-card-above::before {
+  top:auto;
+  bottom:-12px;
+}
+
+@media(max-width:680px) {
+  .player-hover-card-below,
+  .player-hover-card-above {
+    position:fixed;
+    left:16px;
+    right:16px;
+    top:auto;
+    bottom:16px;
+  }
+}
+
+/* Full-detail party member hover cards */
+.player-hover-card {
+  max-height:min(72vh,720px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+
+.player-hover-characters,
+.player-hover-availability {
+  min-width:0;
+}
+
+.player-hover-availability-row > span:last-child {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+/* Migu hover interaction fix v4 */
+@media (min-width:681px) {
+  .player-hover-card {
+    /*
+     * The previous 72vh cap caused a scrollbar even when the card could
+     * comfortably fit on a normal desktop viewport.
+     */
+    max-height:calc(100vh - 32px);
+    overflow-y:auto;
+    scrollbar-gutter:auto;
+  }
+}
+
+/*
+ * Keep the invisible bridge between trigger and absolutely-positioned card.
+ * Pointer movement is additionally protected by the 180 ms close delay in
+ * PlayerProfileHover.tsx.
+ */
+.player-hover-card::before {
+  pointer-events:auto;
+}
+
+
+/* Migu hover final scrollbar fix v7 */
+
+/*
+ * Normal desktop and narrow desktop:
+ * let the profile card use its natural content height.
+ * This prevents the scrollbar that was being triggered by the old
+ * max-height / overflow rules and by the <=680px breakpoint.
+ */
+.player-hover-card {
+  max-height:none !important;
+  height:auto !important;
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
+  scrollbar-width:none !important;
+}
+
+.player-hover-card::-webkit-scrollbar {
+  display:none !important;
+}
+
+/*
+ * Only very small screens keep an internal scroll fallback.
+ */
+@media(max-width:480px), (max-height:560px) {
+  .player-hover-card {
+    max-height:calc(100vh - 24px) !important;
+    max-height:calc(100dvh - 24px) !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    scrollbar-width:thin !important;
+  }
+
+  .player-hover-card::-webkit-scrollbar {
+    display:block !important;
+    width:8px;
+  }
+}
+
+/* Raid-aware hover: scroll only long character lists */
+.player-hover-characters {
+  max-height:min(300px,32vh);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-right:6px;
+  scrollbar-width:thin;
+  scrollbar-gutter:stable;
+}
+
+.player-hover-characters::-webkit-scrollbar {
+  width:7px;
+}
+
+.player-hover-characters::-webkit-scrollbar-thumb {
+  background:var(--border);
+  border-radius:999px;
+}
+
+.player-hover-characters::-webkit-scrollbar-track {
+  background:transparent;
+}
+
+@media(max-width:680px) {
+  .player-hover-characters {
+    max-height:min(240px,30vh);
+  }
+}
+
+/* Hover placement polish */
+@media(min-width:681px) {
+  .player-hover-card-below {
+    top:calc(100% + 14px);
+    bottom:auto;
+  }
+
+  .player-hover-card-above {
+    top:auto;
+    bottom:calc(100% + 14px);
+  }
+
+  .player-hover-card::before {
+    top:-16px;
+    height:16px;
+  }
+
+  .player-hover-card-above::before {
+    top:auto;
+    bottom:-16px;
+  }
+}
+
+/* Responsive hover height safety */
+.player-hover-card {
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+
+.player-hover-characters {
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+
+/* Fixed-position player hover v8
+ *
+ * Authoritative desktop/mobile positioning override. The component is
+ * rendered in document.body, so it no longer participates in party-card
+ * layout or inherits absolute-positioning constraints from the trigger.
+ */
+.player-hover-card.player-hover-fixed-v8 {
+  position:fixed !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  z-index:1000 !important;
+  max-height:none !important;
+  height:auto !important;
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
+  scrollbar-width:none !important;
+}
+
+.player-hover-card.player-hover-fixed-v8::before {
+  display:none !important;
+}
+
+.player-hover-card.player-hover-fixed-v8-positioning {
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+.player-hover-card.player-hover-fixed-v8-emergency {
+  top:16px !important;
+  max-height:calc(100vh - 32px) !important;
+  max-height:calc(100dvh - 32px) !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  scrollbar-width:thin !important;
+}
+
+.player-hover-card.player-hover-fixed-v8-emergency::-webkit-scrollbar {
+  display:block !important;
+  width:8px;
+}
+
+@media(max-width:680px) {
+  .player-hover-card.player-hover-fixed-v8,
+  .player-hover-card.player-hover-fixed-v8-mobile {
+    position:fixed !important;
+    left:16px !important;
+    right:16px !important;
+    top:auto !important;
+    bottom:16px !important;
+    width:auto !important;
+    max-height:calc(100vh - 32px) !important;
+    max-height:calc(100dvh - 32px) !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    scrollbar-width:thin !important;
+  }
+
+  .player-hover-card.player-hover-fixed-v8::-webkit-scrollbar,
+  .player-hover-card.player-hover-fixed-v8-mobile::-webkit-scrollbar {
+    display:block !important;
+    width:8px;
+  }
+
+  .player-hover-card.player-hover-fixed-v8 .player-hover-characters {
+    max-height:min(240px,30vh);
+  }
+}
+
+
+/* Character capability assignment */
+.character-capabilities {
+  display:grid;
+  gap:12px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+}
+
+.character-capability-heading {
+  display:grid;
+  gap:3px;
+}
+
+.character-capability-groups {
+  display:grid;
+  gap:14px;
+}
+
+.character-capability-group {
+  display:grid;
+  gap:8px;
+}
+
+.character-capability-group-title {
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.character-capability-options {
+  display:grid;
+  grid-template-columns:repeat(
+    auto-fit,
+    minmax(min(180px,100%),1fr)
+  );
+  gap:8px;
+}
+
+.character-capability-option {
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:9px;
+  align-items:start;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#10131a;
+  cursor:pointer;
+}
+
+.character-capability-option.selected {
+  border-color:#6f79a8;
+  background:#171b29;
+}
+
+.character-capability-option input {
+  margin-top:3px;
+}
+
+.character-capability-option-copy {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.character-capability-option-copy strong,
+.character-capability-option-copy small {
+  overflow-wrap:anywhere;
+}
+
+.character-capability-save {
+  align-items:center;
+}
+
+@media(max-width:520px) {
+  .character-capability-options {
+    grid-template-columns:1fr;
+  }
+
+  .character-capability-save .btn {
+    flex:1 1 auto;
+  }
+}
+
+
+/* Capability display on public profiles and player hover */
+.public-profile-character-with-capabilities {
+  align-items:start;
+}
+
+.public-character-capabilities {
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+
+.public-character-capability-group {
+  display:grid;
+  gap:5px;
+}
+
+.public-character-capability-scope {
+  color:var(--muted);
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.public-character-capability-tags,
+.player-hover-capabilities {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+
+.public-character-capability-tag,
+.player-hover-capability-tag {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  padding:3px 7px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#10131a;
+  font-size:.74rem;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+
+.player-hover-character-copy {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.player-hover-capabilities {
+  margin-top:4px;
+}
+
+.player-hover-capability-tag {
+  padding:2px 6px;
+  font-size:.68rem;
+}
+
+/* Professional Available players character rows */
+.available-player-character-list {
+  display:grid;
+  gap:8px;
+}
+
+.available-player-character {
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#10131a;
+}
+
+.available-player-character-copy {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.available-player-character-copy strong,
+.available-player-character-copy .muted {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.available-player-character-capabilities {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:3px;
+}
+
+@media(min-width:760px) {
+  .available-player-character-list {
+    grid-template-columns:repeat(
+      auto-fit,
+      minmax(min(280px,100%),1fr)
+    );
+  }
+}
+
+
+/* Structured character armor setup */
+.character-armor {
+  display:grid;
+  gap:12px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+}
+
+.character-armor-heading {
+  display:grid;
+  gap:3px;
+}
+
+.character-armor-options {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.character-armor-option {
+  min-width:120px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 11px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#10131a;
+  cursor:pointer;
+}
+
+.character-armor-option.selected {
+  border-color:#6f79a8;
+  background:#171b29;
+}
+
+.character-armor-option input {
+  margin:0;
+}
+
+.character-armor-colors {
+  display:grid;
+  gap:8px;
+}
+
+.character-armor-subheading {
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.character-armor-save {
+  align-items:center;
+}
+
+.character-armor-public {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+
+@media(max-width:520px) {
+  .character-armor-options {
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .character-armor-option {
+    min-width:0;
+  }
+
+  .character-armor-save .btn {
+    flex:1 1 auto;
+  }
+}
+
+/* Raid damage capability clarification */
+.character-capability-warning {
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:.78rem;
+  line-height:1.35;
+  font-weight:400;
+}
+
+/* Collapsible character profile cards */
+.character-card-collapsible {
+  display:grid;
+  align-content:start;
+  gap:14px;
+  height:100%;
+}
+
+.character-card-summary {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  min-height:28px;
+}
+
+.character-card-summary-pill {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  padding:4px 8px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#10131a;
+  color:var(--muted);
+  font-size:.78rem;
+  line-height:1.2;
+}
+
+.character-card-details-toggle {
+  width:100%;
+}
+
+.character-card-details {
+  display:grid;
+  gap:14px;
+  padding-top:2px;
+}
+
+.character-card-details .character-armor:first-child {
+  border-top:1px solid var(--border);
+}
+
+.character-card-collapsible:not(.character-card-details-open)
+  .character-card-actions {
+  margin-top:auto;
+}
+
+@media(min-width:760px) {
+  .character-card-collapsible {
+    min-height:250px;
+  }
+}
+
+/* Expanded character card full-width behavior */
+@media(min-width:760px) {
+  .character-card-details-open {
+    grid-column:1 / -1;
+  }
+}
+/* Pin expanded character card to top */
+@media(min-width:760px) {
+  .character-card-details-open {
+    order:-1;
+  }
+}
+/* Preferred invitation characters */
+.available-player-preference-help {
+  font-size:0.9rem;
+}
+
+.available-player-character-selectable {
+  cursor:pointer;
+  position:relative;
+  transition:border-color 120ms ease, background 120ms ease;
+}
+
+.available-player-character-selectable:hover {
+  border-color:var(--border-strong, var(--border));
+}
+
+.available-player-character-selectable.preferred-selected {
+  border-color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.available-player-character-checkbox {
+  flex:0 0 auto;
+  margin:0.2rem 0 0;
+}
+
+.preferred-character-pill {
+  white-space:nowrap;
+}
+
+.preferred-character-notice {
+  display:flex;
+  flex-direction:column;
+  gap:0.2rem;
+  padding:0.75rem 0.9rem;
+  border:1px solid var(--border);
+  border-radius:0.75rem;
+}
+
+/* Preferred character card layout polish */
+.available-player-character-selectable {
+  display:grid;
+  grid-template-columns:auto auto minmax(0,1fr);
+  align-items:start;
+  column-gap:0.75rem;
+  row-gap:0.25rem;
+  padding:0.8rem;
+}
+
+.available-player-character-selectable .available-player-character-checkbox {
+  grid-column:1;
+  align-self:center;
+  margin:0;
+}
+
+.available-player-character-selectable .classicon {
+  grid-column:2;
+  align-self:start;
+}
+
+.available-player-character-selectable .available-player-character-copy {
+  grid-column:3;
+  min-width:0;
+}
+
+.available-player-character-selectable .available-player-character-copy > .row {
+  align-items:center;
+  gap:0.5rem;
+}
+
+.available-player-character-selectable .preferred-character-pill {
+  margin-left:auto;
+}
+
+@media(max-width:600px) {
+  .available-player-character-selectable {
+    grid-template-columns:auto auto minmax(0,1fr);
+    padding:0.7rem;
+  }
+}
+/* Preferred character card selection polish */
+.available-player-character-selectable {
+  position:relative;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:start;
+  column-gap:0.85rem;
+  row-gap:0.25rem;
+  width:100%;
+  min-height:122px;
+  padding:0.9rem 7.5rem 0.9rem 0.9rem;
+  border:1px solid var(--border);
+  border-radius:0.75rem;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+  appearance:none;
+  box-sizing:border-box;
+}
+
+.available-player-character-selectable:hover {
+  border-color:var(--border-strong, var(--border));
+}
+
+.available-player-character-selectable.preferred-selected {
+  border-color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.available-player-character-selectable .classicon {
+  grid-column:1;
+  align-self:start;
+}
+
+.available-player-character-selectable .available-player-character-copy {
+  grid-column:2;
+  min-width:0;
+}
+
+.available-player-character-selectable .preferred-character-pill {
+  position:absolute;
+  top:0.9rem;
+  right:0.9rem;
+  margin:0;
+  pointer-events:none;
+}
+
+.available-player-character-selectable:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+@media(max-width:600px) {
+  .available-player-character-selectable {
+    min-height:unset;
+    padding-right:0.9rem;
+  }
+
+  .available-player-character-selectable .preferred-character-pill {
+    position:static;
+    grid-column:2;
+    justify-self:start;
+    margin-top:0.35rem;
+  }
+}
