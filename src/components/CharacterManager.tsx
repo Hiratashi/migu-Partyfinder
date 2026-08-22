@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminConfirmDialog from "@/components/admin/AdminConfirmDialog";
 import ClassIcon from "@/components/ClassIcon";
+import CharacterCapabilities from "@/components/CharacterCapabilities";
 
 type ClassOption={
   id:string;
@@ -14,6 +15,16 @@ type ClassOption={
   icon_path?:string|null;
   base_character?:string;
   path_number?:number;
+};
+
+type Capability={
+  id:string;
+  name:string;
+  description:string;
+  category:"DAMAGE"|"GEAR"|"UTILITY"|"OTHER";
+  raid_id:string|null;
+  raid_name:string|null;
+  sort_order:number;
 };
 
 type CharacterRow={
@@ -30,9 +41,13 @@ type CharacterRow={
 export default function CharacterManager({
   character,
   classes,
+  capabilities,
+  selectedCapabilityIds,
 }:{
   character:CharacterRow;
   classes:ClassOption[];
+  capabilities:Capability[];
+  selectedCapabilityIds:string[];
 }) {
   const router=useRouter();
   const [editing,setEditing]=useState(false);
@@ -172,6 +187,12 @@ export default function CharacterManager({
           </div>
         </div>
       </div>
+
+      <CharacterCapabilities
+        characterId={character.id}
+        capabilities={capabilities}
+        initialSelectedIds={selectedCapabilityIds}
+      />
 
       <div className="row character-card-actions">
         <button

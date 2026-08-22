@@ -30,10 +30,31 @@ type ProfileRow={
   profile_image_path:string|null;
 };
 
+type Capability={
+  id:string;
+  name:string;
+  description:string;
+  category:"DAMAGE"|"GEAR"|"UTILITY"|"OTHER";
+  raid_id:string|null;
+  raid_name:string|null;
+  sort_order:number;
+};
+
+type CapabilityAssignment={
+  character_id:string;
+  capability_tag_id:string;
+};
+
 export default async function Profile() {
   const user=await requireUser();
 
-  const [classes,chars,profile]=await Promise.all([
+  const [
+    classes,
+    chars,
+    profile,
+    capabilities,
+    capabilityAssignments,
+  ]=await Promise.all([
     query<C>(`
       SELECT
         id,name,abbreviation,damage_type,role,icon_path,
@@ -63,7 +84,52 @@ export default async function Profile() {
       FROM users
       WHERE id=$1
     `,[user.id]),
+    query<Capability>(`
+      SELECT
+        ct.id,
+        ct.name,
+        ct.description,
+        ct.category,
+        ct.raid_id,
+        r.name raid_name,
+        ct.sort_order
+      FROM capability_tags ct
+      LEFT JOIN raids r ON r.id=ct.raid_id
+      WHERE ct.active=true
+      ORDER BY
+        CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+        COALESCE(r.sort_order,0),
+        ct.sort_order,
+        ct.name
+    `),
+    query<CapabilityAssignment>(`
+      SELECT
+        cc.character_id,
+        cc.capability_tag_id
+      FROM character_capabilities cc
+      JOIN capability_tags ct
+        ON ct.id=cc.capability_tag_id
+      JOIN characters ch
+        ON ch.id=cc.character_id
+      WHERE ch.user_id=$1
+        AND ch.archived_at IS NULL
+        AND ct.active=true
+    `,[user.id]),
   ]);
+
+  const capabilityIdsByCharacter=new Map<string,string[]>();
+
+  for(const assignment of capabilityAssignments.rows) {
+    const ids=capabilityIdsByCharacter.get(
+      assignment.character_id,
+    )??[];
+
+    ids.push(assignment.capability_tag_id);
+    capabilityIdsByCharacter.set(
+      assignment.character_id,
+      ids,
+    );
+  }
 
   const customImageFilename=
     profile.rows[0]?.profile_image_path??null;
@@ -112,6 +178,10 @@ export default async function Profile() {
             key={c.id}
             character={c}
             classes={classes.rows}
+            capabilities={capabilities.rows}
+            selectedCapabilityIds={
+              capabilityIdsByCharacter.get(c.id)??[]
+            }
           />
         )}
       </div>
