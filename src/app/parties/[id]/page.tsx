@@ -516,8 +516,12 @@ export default async function PartyPage({
         {matches.map(m=>
           <article className="card stack" key={m.user_id}>
             <div>
-              <strong>{m.display}</strong>{" "}
-              <span className="muted">@{m.username}</span>
+              <PlayerProfileHover
+                userId={m.user_id}
+                display={m.display}
+                username={m.username}
+                raidId={party.raid_id}
+              />
             </div>
             <span className="muted">
               {m.fittingCharacters.map(

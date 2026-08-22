@@ -44,6 +44,7 @@ export default function PlayerProfileHover({
 
   const [open,setOpen]=useState(false);
   const [placement,setPlacement]=useState<"below"|"above">("below");
+  const [horizontalOffset,setHorizontalOffset]=useState(0);
   const [preview,setPreview]=useState<Preview|null>(null);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
@@ -128,8 +129,21 @@ export default function PlayerProfileHover({
       const cardRect=card.getBoundingClientRect();
 
       const viewportHeight=window.innerHeight;
-      const gap=10;
+      const gap=14;
       const safeMargin=16;
+      const viewportWidth=window.innerWidth;
+
+      const unclampedLeft=triggerRect.left;
+      const maxLeft=Math.max(
+        safeMargin,
+        viewportWidth-safeMargin-cardRect.width,
+      );
+      const clampedLeft=Math.min(
+        Math.max(unclampedLeft,safeMargin),
+        maxLeft,
+      );
+
+      setHorizontalOffset(clampedLeft-unclampedLeft);
 
       const roomBelow=
         viewportHeight-triggerRect.bottom-safeMargin;
@@ -201,6 +215,7 @@ export default function PlayerProfileHover({
       <span
         ref={cardRef}
         className={`player-hover-card card player-hover-card-${placement}`}
+        style={{transform:`translateX(${horizontalOffset}px)`}}
         role="dialog"
         aria-label={`${display} player profile preview`}
         onMouseEnter={cancelHide}
@@ -268,7 +283,7 @@ export default function PlayerProfileHover({
                       <span>
                         <strong>{character.character_name}</strong>
                         <span className="muted">
-                          {character.abbreviation} · {character.damage_type} · {character.role}
+                          {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
                         </span>
                       </span>
                     </span>

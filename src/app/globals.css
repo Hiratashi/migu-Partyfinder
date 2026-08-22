@@ -2230,3 +2230,26 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     max-height:min(240px,30vh);
   }
 }
+
+/* Hover placement polish */
+@media(min-width:681px) {
+  .player-hover-card-below {
+    top:calc(100% + 14px);
+    bottom:auto;
+  }
+
+  .player-hover-card-above {
+    top:auto;
+    bottom:calc(100% + 14px);
+  }
+
+  .player-hover-card::before {
+    top:-16px;
+    height:16px;
+  }
+
+  .player-hover-card-above::before {
+    top:auto;
+    bottom:-16px;
+  }
+}
