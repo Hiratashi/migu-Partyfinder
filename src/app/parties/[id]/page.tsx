@@ -71,12 +71,19 @@ type PendingInvite={
   username:string;
 };
 
+type MatchCapability={
+  id:string;
+  name:string;
+  raid_id:string|null;
+};
+
 type MatchCharacter={
   id:string;
   name:string;
   abbreviation:string;
   damage_type:string;
   role:string;
+  capabilities:MatchCapability[];
 };
 
 type RawProfile={
@@ -298,7 +305,29 @@ export default async function PartyPage({
                 'name',ch.character_name,
                 'abbreviation',c.abbreviation,
                 'damage_type',c.damage_type,
-                'role',c.role
+                'role',c.role,
+                'capabilities',COALESCE((
+                  SELECT jsonb_agg(
+                    jsonb_build_object(
+                      'id',ct.id,
+                      'name',ct.name,
+                      'raid_id',ct.raid_id
+                    )
+                    ORDER BY
+                      CASE WHEN ct.raid_id IS NULL THEN 0 ELSE 1 END,
+                      ct.sort_order,
+                      ct.name
+                  )
+                  FROM character_capabilities cc
+                  JOIN capability_tags ct
+                    ON ct.id=cc.capability_tag_id
+                  WHERE cc.character_id=ch.id
+                    AND ct.active=true
+                    AND (
+                      ct.raid_id IS NULL
+                      OR ct.raid_id=ap.raid_id
+                    )
+                ),'[]'::jsonb)
               )
               ORDER BY ch.character_name
             )
@@ -366,9 +395,20 @@ export default async function PartyPage({
 
     if(!fitting.length)return [];
 
+    const capabilityMap=new Map<string,MatchCapability>();
+
+    for(const character of fitting) {
+      for(const capability of character.capabilities??[]) {
+        capabilityMap.set(capability.id,capability);
+      }
+    }
+
+    const fittingCapabilities=[...capabilityMap.values()];
+
     return [{
       ...profile,
       fittingCharacters:fitting,
+      fittingCapabilities,
       hasPhysical:fitting.some(
         c=>c.damage_type==="PHYSICAL"&&["DPS","FLEX"].includes(c.role),
       ),
@@ -528,6 +568,21 @@ export default async function PartyPage({
                 c=>`${c.name} (${c.abbreviation}, ${c.damage_type} ${c.role})`,
               ).join(", ")}
             </span>
+
+            {m.fittingCapabilities.length>0&&
+              <div className="row">
+                <span className="muted">Capabilities:</span>
+                {m.fittingCapabilities.map(capability=>
+                  <span
+                    className="public-character-capability-tag"
+                    key={capability.id}
+                  >
+                    {capability.name}
+                  </span>
+                )}
+              </div>
+            }
+
             <div className="row">
               {m.hasPhysical&&<span className="pill">Physical</span>}
               {m.hasMagical&&<span className="pill">Magical</span>}
