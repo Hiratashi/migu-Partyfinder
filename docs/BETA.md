@@ -21,24 +21,61 @@ The goal is to let the guild use the tool normally while collecting practical fe
 The most useful beta testing is ordinary usage:
 
 - Discord login
+- player profiles
 - character creation/editing
+- armor setup
+- capability selection
 - availability
 - party creation
 - joining/leaving
 - invitations
+- preferred-character invitations
 - role/class selection
 - local-time display
 - My Parties
 - history
 - copyable in-game character names
 
-Administrators should also test moderation and configuration workflows.
+Administrators should also test moderation and configuration workflows, including capability management.
+
+## Character capabilities and armor
+
+Characters may contain additional informational setup.
+
+Armor is configured separately from capability tags:
+
+- Tenebrous
+- Exascale
+  - Red
+  - Blue
+  - Green
+
+Capability tags may be global or raid-specific and can describe useful character information such as gear, utility or raid readiness.
+
+These fields are informational. They do not bypass or replace the normal party eligibility and composition rules.
+
+The capability catalogue is intentionally configurable. Administrators can adjust capability names, descriptions, categories, raid scope, active state and display order later, and can add new capability definitions as needed.
+
+## Preferred characters on invitations
+
+Party leads may optionally indicate one or more preferred characters when inviting a player.
+
+This does not lock the invited player to those characters. The invited player may still choose any character that satisfies the party's normal requirements.
+
+This feature should be tested with:
+
+- no preferred character
+- one preferred character
+- multiple preferred characters
+- accepting with a preferred character
+- accepting with a different eligible character
+- declining or revoking the invitation
 
 ## Reporting bugs
 
 Please use GitHub Issues:
 
-https://github.com/Hiratashi/migu-s-Partyfinder/issues
+https://github.com/Hiratashi/migu-Partyfinder/issues
 
 Choose **Bug report** and provide enough information to reproduce the problem.
 
@@ -79,7 +116,7 @@ Additional raids and features may be added after the beta workflow is stable.
 
 ## Data
 
-Partyfinder stores user/profile, availability, party and audit data in PostgreSQL.
+Partyfinder stores user/profile, availability, character setup, party, invitation preference and audit data in PostgreSQL.
 
 While the beta is intended for real usage, users should understand that development changes may occasionally require migrations or cleanup.
 

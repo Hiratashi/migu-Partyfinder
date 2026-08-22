@@ -14,25 +14,70 @@ If you just want to use Partyfinder, start here:
 
 - [User Guide](docs/USER-GUIDE.md)
 - [Beta information](docs/BETA.md)
-- [Report a bug or suggest an improvement](https://github.com/Hiratashi/migu-s-Partyfinder/issues)
+- [Report a bug or suggest an improvement](https://github.com/Hiratashi/migu-Partyfinder/issues)
 
 ## Current features
 
 - Discord OAuth login; no local passwords
 - Guild membership verification
-- Character profiles with class selection and copyable in-game names
+- Player profiles with public profile pages
+- Character management with class selection and copyable in-game names
+- Character armor setup for Tenebrous or Exascale, including Exascale color
+- Per-character capability tags
+- Admin-managed capability catalogue with global or raid-specific scope
+- Raid-specific informational capability markers such as Doom Damage Ready
 - Weekly availability with local-time handling
 - Open party browser
 - Create, edit, join, leave, cancel and complete parties
 - Party invitations
+- Optional preferred character selection when inviting a player
 - Physical / Magical / Support composition requirements
 - Doom Aporia encounter and stage selection
 - Practice and clear party support
 - My Parties and party history
-- Admin dashboard for users, raids, classes, parties and audit events
+- Admin dashboard for users, raids, classes, capabilities, parties and audit events
 - Automatic party lifecycle handling, including expiry and guild-leave cleanup
 - PostgreSQL persistence, Docker deployment and Caddy/HTTPS production hosting
 - Application health checks, same-origin protection and rate limiting
+
+## Player profiles and character setup
+
+Each user can maintain a public-facing Partyfinder profile containing their characters and weekly availability.
+
+Character configuration includes:
+
+- in-game character name
+- class
+- armor setup
+- capability tags
+
+Armor setup is structured separately from capability tags:
+
+- **Tenebrous**
+- **Exascale**
+  - Red
+  - Blue
+  - Green
+
+Tenebrous and Exascale are mutually exclusive for a character.
+
+Capability tags describe useful information about a character and may be global or raid-specific. They are informational and do not override normal party matching or eligibility rules.
+
+The capability catalogue is managed through the admin interface. Capability names, descriptions, categories, raid scope, active state and display order can be adjusted later without requiring a code change. New capability definitions can also be added as needed.
+
+## Preferred characters on invitations
+
+When inviting a player from **Available players**, the party lead may optionally select one or more of that player's eligible characters as preferred choices.
+
+This is a preference only:
+
+- selecting no characters sends a normal invitation
+- one or more characters may be marked as preferred
+- the invited player sees the party lead's preference
+- preferred characters are shown first in the invitation character picker
+- the invited player may still choose any character that satisfies the normal party requirements
+
+Preferred characters do not alter matching, eligibility, role requirements or party composition logic.
 
 ## Beta status
 
@@ -54,10 +99,11 @@ See [docs/BETA.md](docs/BETA.md) for details.
 1. Open https://migu-partyfinder.tsukuyomi.ch
 2. Log in with Discord.
 3. Add your Elsword character(s).
-4. Set your weekly availability.
-5. Browse existing parties or create one.
-6. Join with an eligible character.
-7. Use **My Parties** to manage your upcoming raids.
+4. Configure armor and capabilities where useful.
+5. Set your weekly availability.
+6. Browse existing parties or create one.
+7. Join with an eligible character.
+8. Use **My Parties** to manage your upcoming raids.
 
 Full instructions: [docs/USER-GUIDE.md](docs/USER-GUIDE.md)
 
@@ -192,7 +238,7 @@ The production deployment includes:
 
 ## Project scope
 
-The current raid focus is Doom Aporia. Raid, encounter and class data are stored in PostgreSQL so additional content can be introduced without redesigning the entire application.
+The current raid focus is Doom Aporia. Raid, encounter, class and capability data are stored in PostgreSQL so additional content can be introduced without redesigning the entire application.
 
 ## License
 
