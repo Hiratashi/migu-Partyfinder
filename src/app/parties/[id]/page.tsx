@@ -84,6 +84,8 @@ type MatchCharacter={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  armor_type:"TENEBROUS"|"EXASCALE"|null;
+  exascale_color:"RED"|"BLUE"|"GREEN"|null;
   capabilities:MatchCapability[];
 };
 
@@ -308,6 +310,8 @@ export default async function PartyPage({
                 'damage_type',c.damage_type,
                 'role',c.role,
                 'icon_path',c.icon_path,
+                'armor_type',ch.armor_type,
+                'exascale_color',ch.exascale_color,
                 'capabilities',COALESCE((
                   SELECT jsonb_agg(
                     jsonb_build_object(
@@ -583,6 +587,21 @@ export default async function PartyPage({
                     <div className="muted">
                       {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
                     </div>
+
+                    {character.armor_type&&
+                      <div className="available-player-character-capabilities">
+                        <span className="public-character-capability-tag">
+                          {character.armor_type==="TENEBROUS"
+                            ? "Tenebrous"
+                            : `Exascale · ${
+                                character.exascale_color
+                                  ? character.exascale_color[0]+
+                                    character.exascale_color.slice(1).toLowerCase()
+                                  : ""
+                              }`}
+                        </span>
+                      </div>
+                    }
 
                     {(character.capabilities??[]).length>0&&
                       <div className="available-player-character-capabilities">

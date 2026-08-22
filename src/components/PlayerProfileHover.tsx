@@ -21,6 +21,8 @@ type Character={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  armor_type:"TENEBROUS"|"EXASCALE"|null;
+  exascale_color:"RED"|"BLUE"|"GREEN"|null;
   capabilities:Capability[];
 };
 
@@ -402,6 +404,21 @@ export default function PlayerProfileHover({
                           <span className="muted">
                             {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
                           </span>
+
+                          {character.armor_type&&
+                            <span className="player-hover-capabilities">
+                              <span className="player-hover-capability-tag">
+                                {character.armor_type==="TENEBROUS"
+                                  ? "Tenebrous"
+                                  : `Exascale · ${
+                                      character.exascale_color
+                                        ? character.exascale_color[0]+
+                                          character.exascale_color.slice(1).toLowerCase()
+                                        : ""
+                                    }`}
+                              </span>
+                            </span>
+                          }
 
                           {character.capabilities.length>0&&
                             <span className="player-hover-capabilities">

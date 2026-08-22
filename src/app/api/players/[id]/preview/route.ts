@@ -45,6 +45,8 @@ type Character={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  armor_type:"TENEBROUS"|"EXASCALE"|null;
+  exascale_color:"RED"|"BLUE"|"GREEN"|null;
   capabilities?:Capability[];
 };
 
@@ -125,7 +127,9 @@ export async function GET(
           c.abbreviation,
           c.damage_type,
           c.role,
-          c.icon_path
+          c.icon_path,
+          ch.armor_type,
+          ch.exascale_color
         FROM availability_profiles ap
         JOIN availability_profile_characters apc
           ON apc.profile_id=ap.id
@@ -148,7 +152,9 @@ export async function GET(
           c.abbreviation,
           c.damage_type,
           c.role,
-          c.icon_path
+          c.icon_path,
+          ch.armor_type,
+          ch.exascale_color
         FROM characters ch
         JOIN classes c ON c.id=ch.class_id
         WHERE ch.user_id=$1

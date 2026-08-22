@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AdminConfirmDialog from "@/components/admin/AdminConfirmDialog";
 import ClassIcon from "@/components/ClassIcon";
 import CharacterCapabilities from "@/components/CharacterCapabilities";
+import CharacterArmorSetup from "@/components/CharacterArmorSetup";
 
 type ClassOption={
   id:string;
@@ -27,6 +28,9 @@ type Capability={
   sort_order:number;
 };
 
+type ArmorType="TENEBROUS"|"EXASCALE"|null;
+type ExascaleColor="RED"|"BLUE"|"GREEN"|null;
+
 type CharacterRow={
   id:string;
   character_name:string;
@@ -36,7 +40,26 @@ type CharacterRow={
   damage_type:string;
   role:string;
   icon_path?:string|null;
+  armor_type:ArmorType;
+  exascale_color:ExascaleColor;
 };
+
+function armorSummary(
+  armorType:ArmorType,
+  exascaleColor:ExascaleColor,
+) {
+  if(armorType==="TENEBROUS")return "Tenebrous";
+
+  if(armorType==="EXASCALE") {
+    const color=exascaleColor
+      ? exascaleColor[0]+exascaleColor.slice(1).toLowerCase()
+      : "Unspecified";
+
+    return `Exascale - ${color}`;
+  }
+
+  return "Armor not specified";
+}
 
 export default function CharacterManager({
   character,
@@ -50,12 +73,25 @@ export default function CharacterManager({
   selectedCapabilityIds:string[];
 }) {
   const router=useRouter();
+
   const [editing,setEditing]=useState(false);
+  const [detailsOpen,setDetailsOpen]=useState(false);
   const [name,setName]=useState(character.character_name);
   const [classId,setClassId]=useState(character.class_id);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [confirmOpen,setConfirmOpen]=useState(false);
+
+  // These values drive the collapsed summary and are updated immediately
+  // after successful child-component saves.
+  const [summaryArmorType,setSummaryArmorType]=useState<ArmorType>(
+    character.armor_type,
+  );
+  const [summaryExascaleColor,setSummaryExascaleColor]=
+    useState<ExascaleColor>(character.exascale_color);
+  const [summaryCapabilityIds,setSummaryCapabilityIds]=useState<string[]>(
+    selectedCapabilityIds,
+  );
 
   async function save() {
     if(busy)return;
@@ -116,7 +152,11 @@ export default function CharacterManager({
   if(editing) {
     return <article className="card stack character-card character-card-edit">
       <div className="row">
-        <ClassIcon src={character.icon_path} abbreviation={character.abbreviation} name={character.name}/>
+        <ClassIcon
+          src={character.icon_path}
+          abbreviation={character.abbreviation}
+          name={character.name}
+        />
         <strong>Edit character</strong>
       </div>
 
@@ -133,10 +173,16 @@ export default function CharacterManager({
 
       <label className="form">
         Class
-        <select value={classId} onChange={e=>setClassId(e.target.value)}>
+        <select
+          value={classId}
+          onChange={e=>setClassId(e.target.value)}
+        >
           {classes.map(c=>
             <option key={c.id} value={c.id}>
-              {c.base_character?`${c.base_character} P${c.path_number} - `:""}{c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
+              {c.base_character
+                ? `${c.base_character} P${c.path_number} - `
+                : ""}
+              {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
             </option>
           )}
         </select>
@@ -149,7 +195,7 @@ export default function CharacterManager({
           onClick={save}
           disabled={busy}
         >
-          {busy?"Saving…":"Save"}
+          {busy?"Saving...":"Save"}
         </button>
 
         <button
@@ -176,23 +222,78 @@ export default function CharacterManager({
   }
 
   return <>
-    <article className="card character-card">
+    <article
+      className={`card character-card character-card-collapsible ${
+        detailsOpen?"character-card-details-open":""
+      }`}
+    >
       <div className="character-card-main">
-        <ClassIcon src={character.icon_path} abbreviation={character.abbreviation} name={character.name}/>
+        <ClassIcon
+          src={character.icon_path}
+          abbreviation={character.abbreviation}
+          name={character.name}
+        />
 
         <div className="character-card-copy">
           <strong>{character.character_name}</strong>
           <div className="muted character-meta">
-            {character.name} · {character.damage_type} · {character.role}
+            {character.name} &middot; {character.damage_type} &middot; {character.role}
           </div>
         </div>
       </div>
 
-      <CharacterCapabilities
-        characterId={character.id}
-        capabilities={capabilities}
-        initialSelectedIds={selectedCapabilityIds}
-      />
+      <div className="character-card-summary">
+        <span className="character-card-summary-pill">
+          {armorSummary(
+            summaryArmorType,
+            summaryExascaleColor,
+          )}
+        </span>
+
+        <span className="character-card-summary-pill">
+          {summaryCapabilityIds.length===0
+            ? "No capabilities"
+            : `${summaryCapabilityIds.length} ${
+                summaryCapabilityIds.length===1
+                  ? "capability"
+                  : "capabilities"
+              }`}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        className="btn character-card-details-toggle"
+        aria-expanded={detailsOpen}
+        aria-controls={`character-details-${character.id}`}
+        onClick={()=>setDetailsOpen(value=>!value)}
+      >
+        {detailsOpen?"Hide details":"Manage details"}
+      </button>
+
+      {detailsOpen&&
+        <div
+          className="character-card-details"
+          id={`character-details-${character.id}`}
+        >
+          <CharacterArmorSetup
+            characterId={character.id}
+            initialArmorType={summaryArmorType}
+            initialExascaleColor={summaryExascaleColor}
+            onSaved={(armorType,exascaleColor)=>{
+              setSummaryArmorType(armorType);
+              setSummaryExascaleColor(exascaleColor);
+            }}
+          />
+
+          <CharacterCapabilities
+            characterId={character.id}
+            capabilities={capabilities}
+            initialSelectedIds={summaryCapabilityIds}
+            onSaved={setSummaryCapabilityIds}
+          />
+        </div>
+      }
 
       <div className="row character-card-actions">
         <button

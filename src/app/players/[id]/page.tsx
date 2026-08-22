@@ -35,6 +35,8 @@ type Character={
   damage_type:string;
   role:string;
   icon_path:string|null;
+  armor_type:"TENEBROUS"|"EXASCALE"|null;
+  exascale_color:"RED"|"BLUE"|"GREEN"|null;
 };
 
 const categoryLabel={
@@ -80,7 +82,9 @@ export default async function PlayerProfile({
         c.abbreviation,
         c.damage_type,
         c.role,
-        c.icon_path
+        c.icon_path,
+        ch.armor_type,
+        ch.exascale_color
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
       WHERE ch.user_id=$1
@@ -218,6 +222,21 @@ export default async function PlayerProfile({
                   <div className="muted">
                     {character.name} &middot; {character.damage_type} &middot; {character.role}
                   </div>
+
+                  {character.armor_type&&
+                    <div className="character-armor-public">
+                      <span className="public-character-capability-tag">
+                        {character.armor_type==="TENEBROUS"
+                          ? "Tenebrous"
+                          : `Exascale · ${
+                              character.exascale_color
+                                ? character.exascale_color[0]+
+                                  character.exascale_color.slice(1).toLowerCase()
+                                : ""
+                            }`}
+                      </span>
+                    </div>
+                  }
 
                   {assigned.length>0&&
                     <div className="public-character-capabilities">

@@ -23,10 +23,12 @@ export default function CharacterCapabilities({
   characterId,
   capabilities,
   initialSelectedIds,
+  onSaved,
 }:{
   characterId:string;
   capabilities:Capability[];
   initialSelectedIds:string[];
+  onSaved?:(capabilityIds:string[])=>void;
 }) {
   const [selected,setSelected]=useState<string[]>(initialSelectedIds);
   const [saved,setSaved]=useState<string[]>(initialSelectedIds);
@@ -101,7 +103,15 @@ export default function CharacterCapabilities({
         return;
       }
 
-      setSaved(selected);
+      // Copy the array so both this component and the parent summary receive
+      // an immutable saved snapshot.
+      const savedIds=[...selected];
+
+      setSaved(savedIds);
+
+      // Tell CharacterManager immediately after a successful DB save.
+      onSaved?.(savedIds);
+
       setMessage("Saved");
     } catch {
       setMessage("Could not save capabilities. Please try again.");
@@ -158,9 +168,18 @@ export default function CharacterCapabilities({
 
                 <span className="character-capability-option-copy">
                   <strong>{capability.name}</strong>
+
                   <small className="muted">
                     {categoryLabel[capability.category]}
                   </small>
+
+                  {capability.category==="DAMAGE"&&
+                    capability.raid_id&&
+                    capability.description&&
+                    <small className="character-capability-warning">
+                      {capability.description}
+                    </small>
+                  }
                 </span>
               </label>;
             })}

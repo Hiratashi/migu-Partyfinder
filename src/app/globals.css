@@ -2532,3 +2532,159 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     );
   }
 }
+
+
+/* Structured character armor setup */
+.character-armor {
+  display:grid;
+  gap:12px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+}
+
+.character-armor-heading {
+  display:grid;
+  gap:3px;
+}
+
+.character-armor-options {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.character-armor-option {
+  min-width:120px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 11px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#10131a;
+  cursor:pointer;
+}
+
+.character-armor-option.selected {
+  border-color:#6f79a8;
+  background:#171b29;
+}
+
+.character-armor-option input {
+  margin:0;
+}
+
+.character-armor-colors {
+  display:grid;
+  gap:8px;
+}
+
+.character-armor-subheading {
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.character-armor-save {
+  align-items:center;
+}
+
+.character-armor-public {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+
+@media(max-width:520px) {
+  .character-armor-options {
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .character-armor-option {
+    min-width:0;
+  }
+
+  .character-armor-save .btn {
+    flex:1 1 auto;
+  }
+}
+
+/* Raid damage capability clarification */
+.character-capability-warning {
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:.78rem;
+  line-height:1.35;
+  font-weight:400;
+}
+
+/* Collapsible character profile cards */
+.character-card-collapsible {
+  display:grid;
+  align-content:start;
+  gap:14px;
+  height:100%;
+}
+
+.character-card-summary {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  min-height:28px;
+}
+
+.character-card-summary-pill {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  padding:4px 8px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#10131a;
+  color:var(--muted);
+  font-size:.78rem;
+  line-height:1.2;
+}
+
+.character-card-details-toggle {
+  width:100%;
+}
+
+.character-card-details {
+  display:grid;
+  gap:14px;
+  padding-top:2px;
+}
+
+.character-card-details .character-armor:first-child {
+  border-top:1px solid var(--border);
+}
+
+.character-card-collapsible:not(.character-card-details-open)
+  .character-card-actions {
+  margin-top:auto;
+}
+
+@media(min-width:760px) {
+  .character-card-collapsible {
+    min-height:250px;
+  }
+}
+
+/* Expanded character card full-width behavior */
+@media(min-width:760px) {
+  .character-card-details-open {
+    grid-column:1 / -1;
+  }
+}
+/* Pin expanded character card to top */
+@media(min-width:760px) {
+  .character-card-details-open {
+    order:-1;
+  }
+}
