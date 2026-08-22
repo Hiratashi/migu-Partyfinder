@@ -18,6 +18,7 @@ import {
 } from "@/lib/weekly-availability";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import CopyCharacterName from "@/components/CopyCharacterName";
+import PlayerProfileHover from "@/components/PlayerProfileHover";
 
 type P={
   id:string;
@@ -554,8 +555,11 @@ export default async function PartyPage({
                 name={m.character_name??undefined}
               />
               <div>
-                <strong>{m.display}</strong>{" "}
-                <span className="muted">@{m.username}</span>
+                <PlayerProfileHover
+                  userId={m.user_id}
+                  display={m.display}
+                  username={m.username}
+                />
                 <div className="muted">
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
                   {m.damage_type?` - ${m.damage_type} ${m.role}`:""}
