@@ -32,6 +32,7 @@ type Inv={
   start_time:Date;
   leader:string;
   encounters:string;
+  preferred_characters:string|null;
 };
 
 export default async function Home() {
@@ -43,7 +44,17 @@ export default async function Home() {
       p.id,
       p.start_time,
       COALESCE(u.display_name,u.username) leader,
-      string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters
+      string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
+      (
+        SELECT string_agg(
+          ch_pref.character_name,
+          ', ' ORDER BY ch_pref.character_name
+        )
+        FROM party_invitation_preferred_characters pipc
+        JOIN characters ch_pref ON ch_pref.id=pipc.character_id
+        WHERE pipc.party_id=p.id
+          AND pipc.user_id=$1
+      ) preferred_characters
     FROM party_members pm
     JOIN parties p ON p.id=pm.party_id
     JOIN users u ON u.id=p.leader_id
@@ -127,6 +138,7 @@ export default async function Home() {
               leader:i.leader,
               encounters:i.encounters,
               start:new Date(i.start_time).toISOString(),
+              preferredCharacters:i.preferred_characters,
             }}
             returnTo="/"
           />

@@ -141,6 +141,12 @@ export async function POST(
       WHERE party_id=$2 AND user_id=$3 AND status='INVITED'
     `,[body.data.characterId,id,user.id]);
 
+    await client.query(
+      `DELETE FROM party_invitation_preferred_characters
+       WHERE party_id=$1 AND user_id=$2`,
+      [id,user.id],
+    );
+
     await syncPartyOpenFull(id,client);
 
     await client.query(
