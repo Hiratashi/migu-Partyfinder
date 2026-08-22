@@ -38,6 +38,7 @@ export default function PlayerProfileHover({
 }) {
   const wrapperRef=useRef<HTMLSpanElement>(null);
   const cardRef=useRef<HTMLSpanElement>(null);
+  const hideTimerRef=useRef<ReturnType<typeof setTimeout>|null>(null);
 
   const [open,setOpen]=useState(false);
   const [placement,setPlacement]=useState<"below"|"above">("below");
@@ -78,13 +79,30 @@ export default function PlayerProfileHover({
     }
   }
 
+  function cancelHide() {
+    if(hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current=null;
+    }
+  }
+
   function show() {
+    cancelHide();
     setOpen(true);
     void load();
   }
 
   function hide() {
+    cancelHide();
     setOpen(false);
+  }
+
+  function scheduleHide() {
+    cancelHide();
+    hideTimerRef.current=setTimeout(()=>{
+      setOpen(false);
+      hideTimerRef.current=null;
+    },180);
   }
 
   useLayoutEffect(()=>{
@@ -145,7 +163,7 @@ export default function PlayerProfileHover({
     ref={wrapperRef}
     className="player-hover"
     onMouseEnter={show}
-    onMouseLeave={hide}
+    onMouseLeave={scheduleHide}
     onFocus={show}
     onBlur={e=>{
       if(!e.currentTarget.contains(e.relatedTarget as Node|null)) {
@@ -175,6 +193,8 @@ export default function PlayerProfileHover({
         className={`player-hover-card card player-hover-card-${placement}`}
         role="dialog"
         aria-label={`${display} player profile preview`}
+        onMouseEnter={cancelHide}
+        onMouseLeave={scheduleHide}
       >
         {loading&&
           <span className="muted">
