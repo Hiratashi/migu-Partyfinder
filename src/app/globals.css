@@ -2200,3 +2200,33 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     width:8px;
   }
 }
+
+/* Raid-aware hover: scroll only long character lists */
+.player-hover-characters {
+  max-height:min(300px,32vh);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-right:6px;
+  scrollbar-width:thin;
+  scrollbar-gutter:stable;
+}
+
+.player-hover-characters::-webkit-scrollbar {
+  width:7px;
+}
+
+.player-hover-characters::-webkit-scrollbar-thumb {
+  background:var(--border);
+  border-radius:999px;
+}
+
+.player-hover-characters::-webkit-scrollbar-track {
+  background:transparent;
+}
+
+@media(max-width:680px) {
+  .player-hover-characters {
+    max-height:min(240px,30vh);
+  }
+}

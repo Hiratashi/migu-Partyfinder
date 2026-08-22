@@ -65,10 +65,19 @@ export async function GET(
 
   const viewerTimeZone=
     req.nextUrl.searchParams.get("timezone")??"";
+  const raidId=
+    req.nextUrl.searchParams.get("raidId")??"";
 
   if(!validTimeZone(viewerTimeZone)) {
     return NextResponse.json(
       {error:"invalid_timezone"},
+      {status:400},
+    );
+  }
+
+  if(raidId&&!UUID.test(raidId)) {
+    return NextResponse.json(
+      {error:"invalid_raid"},
       {status:400},
     );
   }
@@ -96,23 +105,48 @@ export async function GET(
     );
   }
 
+  const characterQuery=raidId
+    ? query<Character>(`
+        SELECT
+          ch.id,
+          ch.character_name,
+          c.name,
+          c.abbreviation,
+          c.damage_type,
+          c.role,
+          c.icon_path
+        FROM availability_profiles ap
+        JOIN availability_profile_characters apc
+          ON apc.profile_id=ap.id
+        JOIN characters ch
+          ON ch.id=apc.character_id
+         AND ch.user_id=ap.user_id
+        JOIN classes c
+          ON c.id=ch.class_id
+        WHERE ap.user_id=$1
+          AND ap.raid_id=$2
+          AND ap.enabled=true
+          AND ch.archived_at IS NULL
+        ORDER BY ch.character_name
+      `,[id,raidId])
+    : query<Character>(`
+        SELECT
+          ch.id,
+          ch.character_name,
+          c.name,
+          c.abbreviation,
+          c.damage_type,
+          c.role,
+          c.icon_path
+        FROM characters ch
+        JOIN classes c ON c.id=ch.class_id
+        WHERE ch.user_id=$1
+          AND ch.archived_at IS NULL
+        ORDER BY ch.character_name
+      `,[id]);
+
   const [characters,slots]=await Promise.all([
-    query<Character>(`
-      SELECT
-        ch.id,
-        ch.character_name,
-        c.name,
-        c.abbreviation,
-        c.damage_type,
-        c.role,
-        c.icon_path
-      FROM characters ch
-      JOIN classes c ON c.id=ch.class_id
-      WHERE ch.user_id=$1
-        AND ch.archived_at IS NULL
-      ORDER BY ch.character_name
-      LIMIT 6
-    `,[id]),
+    characterQuery,
     query<PublicWeeklySlot>(`
       SELECT day_of_week,minute_of_day
       FROM availability_user_weekly_slots

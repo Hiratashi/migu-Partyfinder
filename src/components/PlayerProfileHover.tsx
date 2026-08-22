@@ -31,10 +31,12 @@ export default function PlayerProfileHover({
   userId,
   display,
   username,
+  raidId,
 }:{
   userId:string;
   display:string;
   username:string;
+  raidId?:string;
 }) {
   const wrapperRef=useRef<HTMLSpanElement>(null);
   const cardRef=useRef<HTMLSpanElement>(null);
@@ -56,8 +58,16 @@ export default function PlayerProfileHover({
       const timeZone=
         Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
 
+      const params=new URLSearchParams({
+        timezone:timeZone,
+      });
+
+      if(raidId) {
+        params.set("raidId",raidId);
+      }
+
       const response=await fetch(
-        `/api/players/${encodeURIComponent(userId)}/preview?timezone=${encodeURIComponent(timeZone)}`,
+        `/api/players/${encodeURIComponent(userId)}/preview?${params.toString()}`,
         {
           method:"GET",
           cache:"no-store",

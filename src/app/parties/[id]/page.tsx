@@ -559,6 +559,7 @@ export default async function PartyPage({
                   userId={m.user_id}
                   display={m.display}
                   username={m.username}
+                  raidId={party.raid_id}
                 />
                 <div className="muted">
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
