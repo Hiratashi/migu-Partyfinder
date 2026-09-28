@@ -2,7 +2,23 @@ import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 
 type Kind="PARTY_INVITATION"|"PARTY_CHANGED"|"PARTY_CLOSED"|"PARTY_REMOVED"|
-  "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL";
+  "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL"|"PARTY_CHARACTER_CHANGED";
+
+export async function notifyLeaderOfCharacterChange(client:PoolClient,{
+  partyId,leaderId,memberName,before,after,
+}: {
+  partyId:string;
+  leaderId:string;
+  memberName:string;
+  before:string;
+  after:string;
+}) {
+  await notifyUsers(client,{
+    partyId,recipients:[leaderId],kind:"PARTY_CHARACTER_CHANGED",
+    title:"Player changed character",
+    body:`${memberName} changed from ${before} to ${after}.`,
+  });
+}
 
 export async function notifyLeaderOfJoin(client:PoolClient,{
   partyId,leaderId,memberName,becameFull,
