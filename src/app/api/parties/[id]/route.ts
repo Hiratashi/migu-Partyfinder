@@ -6,6 +6,7 @@ import { sameOrigin } from "@/lib/security";
 import { getRaidById, raidSupportsStage } from "@/lib/raids";
 import { limitWrite } from "@/lib/rate-limit";
 import { notifyUsers } from "@/lib/notifications";
+import type { NotificationChange } from "@/lib/notifications";
 
 export async function PATCH(
   req:NextRequest,
@@ -84,14 +85,14 @@ export async function PATCH(
     ...new Set([...d.encounters,...d.practiceEncounterIds]),
   ];
 
-  const allowed=await query(`
-    SELECT id
+  const allowed=await query<{id:string;code:string;name:string}>(`
+    SELECT id,code,name
     FROM encounters
     WHERE raid_id=$1
-      AND id=ANY($2::uuid[])
-  `,[raid.id,allEncounterIds]);
+  `,[raid.id]);
 
-  if(allowed.rowCount!==allEncounterIds.length) {
+  const allowedIds=new Set(allowed.rows.map(row=>row.id));
+  if(allEncounterIds.some(encounterId=>!allowedIds.has(encounterId))) {
     return NextResponse.json({error:"invalid_encounter"},{status:400});
   }
 
@@ -129,16 +130,30 @@ export async function PATCH(
     }
     const previous=before.rows[0];
     const changes:string[]=[];
-    if(previous.title!==(d.title||null))changes.push("title");
-    if(previous.start_time.getTime()!==new Date(d.startTime).getTime() ||
-       previous.end_time?.getTime()!==(d.endTime?new Date(d.endTime).getTime():undefined))changes.push("time");
-    if(previous.difficulty_stage!==d.difficultyStage)changes.push("stage");
-    if(previous.is_practice!==d.isPractice)changes.push("practice mode");
+    const changeDetails:NotificationChange[]=[];
+    const add=(group:string,label:string,from:string,to:string,format?:"datetime")=>{
+      if(from===to)return;
+      if(!changes.includes(group))changes.push(group);
+      changeDetails.push({label,before:from,after:to,format});
+    };
+    add("title","Title",previous.title||"Untitled party",d.title||"Untitled party");
+    add("time","Start time",previous.start_time.toISOString(),new Date(d.startTime).toISOString(),"datetime");
+    add("time","End time",previous.end_time?.toISOString()??"None",d.endTime?new Date(d.endTime).toISOString():"None","datetime");
+    add("stage","Stage",String(previous.difficulty_stage),String(d.difficultyStage));
+    add("practice mode","Practice mode",previous.is_practice?"Yes":"No",d.isPractice?"Yes":"No");
     if(previous.need_physical!==d.needPhysical || previous.need_magical!==d.needMagical ||
        previous.need_dps!==d.needDps || previous.need_support!==d.needSupport ||
-       previous.composition_restricted!==d.compositionRestricted)changes.push("role composition");
-    if(JSON.stringify(previous.encounters)!==JSON.stringify([...d.encounters].sort()) ||
-       JSON.stringify(previous.practice_encounters)!==JSON.stringify([...d.practiceEncounterIds].sort()))changes.push("encounters");
+       previous.composition_restricted!==d.compositionRestricted) {
+      const composition=(physical:number,magical:number,dps:number,support:number,restricted:boolean)=>
+        `${d.compositionModel==="DPS_SUPPORT"?`${dps} DPS`:`${physical} physical, ${magical} magical`}, ${support} support · ${restricted?"enforced":"flexible"}`;
+      add("role composition","Role composition",
+        composition(previous.need_physical,previous.need_magical,previous.need_dps,previous.need_support,previous.composition_restricted),
+        composition(d.needPhysical,d.needMagical,d.needDps,d.needSupport,d.compositionRestricted));
+    }
+    const names=new Map(allowed.rows.map(row=>[row.id,`${row.code} ${row.name}`]));
+    const encounterText=(ids:string[])=>ids.map(id=>names.get(id)??id).sort().join(", ")||"None";
+    add("encounters","Encounters",encounterText(previous.encounters),encounterText(d.encounters));
+    add("encounters","Practice encounters",encounterText(previous.practice_encounters),encounterText(d.practiceEncounterIds));
 
     await client.query(`
       UPDATE parties
@@ -209,6 +224,7 @@ export async function PATCH(
         kind:"PARTY_CHANGED",
         title:"Party details changed",
         body:`The party ${changes.join(", ")} changed. Review the updated details.`,
+        changeDetails,
       });
     }
 

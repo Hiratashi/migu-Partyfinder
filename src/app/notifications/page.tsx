@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
-import NotificationReadButton from "@/components/NotificationReadButton";
-import LocalDateTime from "@/components/LocalDateTime";
+import NotificationItem from "@/components/NotificationItem";
+import type { NotificationChange } from "@/lib/notifications";
 
 type Notification={
   id:string;
@@ -11,14 +10,16 @@ type Notification={
   party_id:string|null;
   read_at:Date|null;
   created_at:Date;
+  change_details:NotificationChange[];
 };
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({searchParams}:{searchParams:Promise<{view?:string}>}) {
   const user=await requireUser();
+  const archived=(await searchParams).view==="archive";
   const notifications=await query<Notification>(`
-    SELECT id,title,body,party_id,read_at,created_at
+    SELECT id,title,body,party_id,read_at,created_at,change_details
     FROM notifications
-    WHERE user_id=$1
+    WHERE user_id=$1 AND created_at ${archived?"<":">="} now()-interval '30 days'
     ORDER BY created_at DESC,id DESC
     LIMIT 100
   `,[user.id]);
@@ -26,20 +27,23 @@ export default async function NotificationsPage() {
   return <main>
     <h1>Notifications</h1>
     <p>Invitations and party updates appear here.</p>
+    <nav className="notification-tabs" aria-label="Notification history">
+      <Link className={`btn ${archived?"":"active-nav"}`} href="/notifications">Recent</Link>
+      <Link className={`btn ${archived?"active-nav":""}`} href="/notifications?view=archive">Archive (30+ days)</Link>
+    </nav>
     {notifications.rows.length===0
-      ? <p>No notifications yet.</p>
+      ? <p>{archived?"No archived notifications.":"No recent notifications."}</p>
       : <ul className="notification-list">
-          {notifications.rows.map(item=><li key={item.id} className="notification-item">
-            <div>
-              <strong>{item.title}</strong>{!item.read_at&&" · Unread"}
-              <p>{item.body}</p>
-              <small><LocalDateTime iso={item.created_at.toISOString()}/></small>
-            </div>
-            <div className="notification-actions">
-              {item.party_id&&<Link className="btn" href={`/parties/${item.party_id}`}>View party</Link>}
-              {!item.read_at&&<NotificationReadButton id={item.id}/>}
-            </div>
-          </li>)}
+          {notifications.rows.map(item=><NotificationItem key={item.id} item={{
+            id:item.id,
+            title:item.title,
+            body:item.body,
+            partyId:item.party_id,
+            read:Boolean(item.read_at),
+            createdAt:item.created_at.toISOString(),
+            changeDetails:item.change_details,
+          }}/>) }
         </ul>}
   </main>;
 }
+import Link from "next/link";

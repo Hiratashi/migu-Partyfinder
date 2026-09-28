@@ -29,7 +29,6 @@ export default function SiteHeader({
     </Link>
 
     <nav className="site-nav" aria-label="Primary navigation">
-      <NotificationNav initialCount={unreadNotifications}/>
       <Link
         className={`btn ${pathname==="/my-parties"?"active-nav":""}`}
         href="/my-parties"
@@ -48,6 +47,7 @@ export default function SiteHeader({
       >
         + Create Party
       </Link>
+      <NotificationNav initialCount={unreadNotifications}/>
       <AccountMenu user={user}/>
     </nav>
   </header>;

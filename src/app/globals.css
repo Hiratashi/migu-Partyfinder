@@ -227,12 +227,25 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
 }
 
 .active-nav { outline:1px solid #59627a; }
+.notification-bell { position:relative; display:flex; align-items:center; justify-content:center; min-width:46px; padding:10px; }
+.notification-badge { position:absolute; top:-7px; right:-8px; min-width:19px; height:19px; padding:0 4px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#db4155; color:white; font-size:.7rem; font-weight:700; line-height:1; }
 
 .notification-list { list-style:none; padding:0; display:grid; gap:12px; }
+.notification-tabs { display:flex; gap:8px; margin:16px 0; flex-wrap:wrap; }
 .notification-item { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:16px; border:1px solid #59627a; border-radius:10px; }
 .notification-item p { margin:8px 0; }
+.notification-unread { border-color:#8f7ac0; }
+.notification-unread-label { color:#ddbdff; }
 .notification-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.notification-change-list { margin-top:16px; display:grid; gap:12px; }
+.notification-change { border-top:1px solid #45485f; padding-top:10px; }
+.notification-change-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px; overflow-wrap:anywhere; }
+.notification-change-values span { padding:10px; border-radius:8px; display:grid; gap:5px; }
+.notification-change-values small { font-size:.75rem; }
+.notification-before { background:rgba(180,65,77,.12); color:#ffb7bb; }
+.notification-after { background:rgba(44,153,109,.14); color:#a8efd0; }
 @media(max-width:520px){ .notification-item { flex-direction:column; align-items:stretch; } }
+@media(max-width:520px){ .notification-change-values { grid-template-columns:1fr; } }
 
 .account-menu { position:relative; }
 .account-popover {
@@ -316,6 +329,7 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
 @media(max-width:520px){
   .site-nav { display:grid; grid-template-columns:1fr 1fr; }
   .site-nav .btn { width:100%; }
+  .site-nav .notification-bell { min-width:46px; }
   .account-menu { width:100%; }
   .account-menu > .btn { width:100%; }
   .account-popover { position:fixed; left:16px; right:16px; top:auto; width:auto; }
