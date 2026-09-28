@@ -8,6 +8,12 @@ A community-built, guild-only raid party finder for **Elsword**. The current foc
 
 > This is an unofficial fan/community project. It is not affiliated with, endorsed by, or operated by KOG Games or any game/server operator. Game names and related trademarks belong to their respective owners.
 
+### Class icons
+
+The 60 built-in class icons are bundled in `public/class-icons` and served by Partyfinder. Migration `027_local_class_icons.sql` changes existing Elwiki class URLs to those local paths while preserving administrator-specified custom URLs. The image sources and class-page references are recorded in `scripts/class-icon-sources.json` (CoboDex artwork; rights remain with their respective owners).
+
+To refresh the bundled images, run `npm run icons:refresh` on a machine that can reach CoboDex, review the changed files, and commit them before deploying. The script validates all 60 WebP files before replacing any; it does not run on Docker startup, so an upstream outage cannot block deployment. If CoboDex changes an image URL or a new class is added, update the source manifest and catalogue deliberately. Administrators can still enter an image path for other classes.
+
 ## For guild members
 
 If you just want to use Partyfinder, start here:
