@@ -39,7 +39,8 @@ async function claim() {
     const result=await client.query(`
       SELECT o.notification_id,n.user_id,n.kind,n.title,n.body,n.party_id,
              n.change_details,n.read_at,u.discord_id,u.access_disabled,
-             p.start_time,o.attempts
+             u.discord_guild_alerts_enabled,p.start_time,o.attempts,
+             o.fallback_required
       FROM discord_notification_outbox o
       JOIN notifications n ON n.id=o.notification_id
       JOIN users u ON u.id=n.user_id
@@ -86,16 +87,45 @@ function message(row) {
   return `**${row.title}**\n${row.body}${changes?`\n${changes}`:''}${time}${link}`.slice(0,2000);
 }
 
-async function finish(row,{messageId=null,stop=false,error=null,delay=0}={}) {
+async function finish(row,{messageId=null,stop=false,error=null,delay=0,method=null}={}) {
   await pool.query(`
     UPDATE discord_notification_outbox
     SET delivered_at=CASE WHEN $2::text IS NOT NULL THEN now() ELSE delivered_at END,
         discord_message_id=$2,stopped_at=CASE WHEN $3 THEN now() ELSE stopped_at END,
         last_error=$4,leased_until=NULL,
-        next_attempt_at=now()+($5::int*interval '1 second')
+        next_attempt_at=now()+($5::int*interval '1 second'),
+        delivery_method=COALESCE($6,delivery_method)
     WHERE notification_id=$1
-  `,[row.notification_id,messageId,stop,error,delay]);
+  `,[row.notification_id,messageId,stop,error,delay,method]);
   if(stop)console.warn('Discord delivery stopped',row.notification_id,row.kind,error);
+}
+
+async function guildFallback(row,dmCode=null) {
+  const channel=process.env.DISCORD_ALERT_CHANNEL_ID;
+  if(!row.discord_guild_alerts_enabled || !channel) {
+    await finish(row,{stop:true,error:dmCode
+      ? `DM unavailable (Discord ${dmCode}); website inbox only`
+      : 'Guild fallback unavailable; website inbox only'});
+    return;
+  }
+  try {
+    const sent=await discord(`/channels/${channel}/messages`,{
+      method:'POST',body:JSON.stringify({
+        content:`<@${row.discord_id}> You have a private Partyfinder notification. Check ${origin}/notifications`,
+        allowed_mentions:{users:[row.discord_id]},
+        nonce:nonce(row.notification_id),enforce_nonce:true,
+      }),
+    });
+    await finish(row,{messageId:sent.id,method:'GUILD',
+      error:dmCode?`DM unavailable (Discord ${dmCode}); guild mention delivered`:null});
+  } catch(error) {
+    const label=`guild fallback: HTTP ${error.status??'network'}${error.apiCode?` / Discord ${error.apiCode}`:''}`;
+    const delay=error.status===429
+      ? Math.min(3600,Math.max(2,Math.ceil(error.retryAfter)))
+      : Math.min(3600,Math.pow(2,Math.min(row.attempts,10))*5);
+    await finish(row,{error:label,delay});
+    console.error('Discord guild fallback retry scheduled',row.notification_id,label);
+  }
 }
 
 async function deliver(row) {
@@ -127,6 +157,10 @@ async function deliver(row) {
       await finish(row,{stop:true,error:'Required guild role absent'});
       return;
     }
+    if(row.fallback_required) {
+      await guildFallback(row);
+      return;
+    }
     phase='open DM';
     const dm=await discord('/users/@me/channels',{
       method:'POST',body:JSON.stringify({recipient_id:row.discord_id}),
@@ -138,11 +172,13 @@ async function deliver(row) {
         nonce:nonce(row.notification_id),enforce_nonce:true,
       }),
     });
-    await finish(row,{messageId:sent.id});
+    await finish(row,{messageId:sent.id,method:'DM'});
   } catch(error) {
     const label=`${phase}: HTTP ${error.status??'network'}${error.apiCode?` / Discord ${error.apiCode}`:''}`;
     if([50007,50278].includes(error.apiCode)) {
-      await finish(row,{stop:true,error:`${label} (recipient cannot receive DM)`});
+      await pool.query(`UPDATE discord_notification_outbox
+        SET fallback_required=true WHERE notification_id=$1`,[row.notification_id]);
+      await guildFallback(row,error.apiCode);
     } else if(error.status===403 || error.status===404) {
       // A different 403/404 might be bot configuration rather than a user
       // preference. Preserve the alert so a corrected setup can retry it.

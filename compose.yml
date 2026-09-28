@@ -75,6 +75,7 @@ services:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
       DISCORD_REQUIRED_ROLE_ID: ${DISCORD_REQUIRED_ROLE_ID:-}
       DISCORD_ANNOUNCEMENT_CHANNEL_ID: ${DISCORD_ANNOUNCEMENT_CHANNEL_ID:-}
+      DISCORD_ALERT_CHANNEL_ID: ${DISCORD_ALERT_CHANNEL_ID:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
