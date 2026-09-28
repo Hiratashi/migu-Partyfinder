@@ -112,6 +112,11 @@ async function deliver(row) {
         await finish(row,{stop:true,error:'Recipient no longer in guild'});
         return;
       }
+      // A 403 here indicates bot/guild configuration, not a blocked DM.
+      if(error.status===403) {
+        await finish(row,{error:'Bot cannot check guild membership',delay:3600});
+        return;
+      }
       throw error;
     }
     const requiredRole=process.env.DISCORD_REQUIRED_ROLE_ID;
