@@ -8,6 +8,7 @@
     "start": "next start",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
+    "icons:refresh": "node scripts/refresh-class-icons.mjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
