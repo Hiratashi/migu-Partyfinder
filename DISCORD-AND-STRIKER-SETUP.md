@@ -15,7 +15,7 @@ deleted when the application next serves an authenticated request. Migration
 2. Set `DISCORD_BOT_TOKEN` in your server environment. This is a bot token,
    separate from `DISCORD_CLIENT_SECRET` and OAuth user tokens. Optionally set
    `DISCORD_ANNOUNCEMENT_CHANNEL_ID` to the ID of the read-only channel. The
-   worker sends public notices only for newly created parties, with no pings.
+   worker posts new parties and edits each post as its roster changes.
    Optionally set `DISCORD_ALERT_CHANNEL_ID` to a read-only channel for private
    alerts. It can be the same channel as announcements. A member can choose
    guild mentions instead of DMs in Profile & characters. The guild message includes the same
@@ -26,6 +26,14 @@ deleted when the application next serves an authenticated request. Migration
    `docker compose --profile discord up -d --build`. Without this profile the
    website continues to work and the queue waits for the worker.
 
+Raid admins can enter DPS and support role IDs in Admin → Raids. New parties
+are posted by default and ping only the configured roles requested by that
+party; both posting and role pings can be turned off on creation. The bot needs
+permission to mention the roles, or the roles must be mentionable. Joins,
+leaves, character changes, edits, and closures update the original post
+without pinging roles again. The post shows the roster, occupancy, remaining
+requested roles, and a party link.
+
 The worker checks current guild membership and any required role before delivery.
 It retries temporary failures and rate limits. If a member chooses DMs and
 Discord blocks them, the website inbox still contains the alert. Choosing
@@ -34,6 +42,11 @@ If that channel is unavailable, website delivery still works. Start the bot befo
 parties to test announcements; older parties are not announced retroactively.
 Discord times use viewer-local timestamp tags. No slash commands are installed
 yet; party management remains on the website.
+
+On material party edits, members may accept or decline the changed details.
+Declining keeps their seat and shows their response to all party members;
+leaving remains a separate action. A later material edit resets responses to
+pending.
 
 ## Two-group raids
 

@@ -80,7 +80,7 @@ function timestamp(value) {
 
 function message(row,maxLength=2000) {
   const changes=Array.isArray(row.change_details)
-    ? row.change_details.map(item=>
+    ? row.change_details.filter(item=>row.kind!=='PARTY_CHANGED'||item.format==='datetime').map(item=>
       `${item.label}: ${item.format==='datetime'?timestamp(item.before):item.before} → ${item.format==='datetime'?timestamp(item.after):item.after}`,
     ).join('\n') : '';
   const time=row.start_time && !row.change_details?.some(item=>item.label==='Start time')
@@ -210,8 +210,10 @@ async function announceOne() {
   try {
     await client.query('BEGIN');
     const result=await client.query(`
-      SELECT a.party_id,a.attempts,p.start_time,p.status,r.name AS raid_name,
-             p.title
+      SELECT a.party_id,a.attempts,a.revision,a.discord_message_id,
+             p.start_time,p.status,p.discord_announce,p.discord_ping_roles,
+             p.need_dps,p.need_support,p.title,r.name AS raid_name,r.party_size,
+             r.discord_dps_role_id,r.discord_support_role_id
       FROM discord_party_announcements a
       JOIN parties p ON p.id=a.party_id
       JOIN raids r ON r.id=p.raid_id
@@ -238,25 +240,63 @@ async function announceOne() {
     await pool.query(`
       UPDATE discord_party_announcements
       SET delivered_at=CASE WHEN $2::text IS NOT NULL THEN now() ELSE delivered_at END,
-          discord_message_id=$2,stopped_at=CASE WHEN $3 THEN now() ELSE stopped_at END,
+          discord_message_id=COALESCE($2,discord_message_id),
+          stopped_at=CASE WHEN $3 THEN now() ELSE stopped_at END,
           last_error=$4,leased_until=NULL,
           next_attempt_at=now()+($5::int*interval '1 second')
-      WHERE party_id=$1
-    `,[row.party_id,messageId,stop,error,delay]);
+      WHERE party_id=$1 AND revision=$6
+    `,[row.party_id,messageId,stop,error,delay,row.revision]);
   }
-  if(!['OPEN','FULL'].includes(row.status) || new Date(row.start_time)<=new Date()) {
+  if(!row.discord_announce || (!row.discord_message_id &&
+    (!['OPEN','FULL'].includes(row.status) || new Date(row.start_time)<=new Date()))) {
     await update({stop:true,error:'Party no longer available'});
     return true;
   }
   try {
     const name=(row.title||row.raid_name).replace(/[@`*_~|>]/g,'').slice(0,100);
-    const sent=await discord(`/channels/${channel}/messages`,{
-      method:'POST',body:JSON.stringify({
-        content:`New party: **${name}**\n${row.raid_name} · ${timestamp(row.start_time)}\n${origin}/parties/${row.party_id}`,
-        allowed_mentions:{parse:[]},nonce:nonce(row.party_id),enforce_nonce:true,
+    const roster=await pool.query(`
+      SELECT COALESCE(u.display_name,u.username) AS player,
+             ch.character_name,c.name AS class_name,c.role
+      FROM party_members pm
+      JOIN users u ON u.id=pm.user_id
+      LEFT JOIN characters ch ON ch.id=pm.character_id
+      LEFT JOIN classes c ON c.id=ch.class_id
+      WHERE pm.party_id=$1 AND pm.status='ACCEPTED'
+      ORDER BY pm.joined_at
+    `,[row.party_id]);
+    const filled=roster.rows.length;
+    const dps=roster.rows.filter(member=>member.role==='DPS').length;
+    const support=roster.rows.filter(member=>member.role==='SUPPORT').length;
+    const missingDps=Math.max(0,row.need_dps-dps);
+    const missingSupport=Math.max(0,row.need_support-support);
+    const wanted=[missingDps?`${missingDps} DPS`:null,missingSupport?`${missingSupport} support`:null].filter(Boolean).join(', ');
+    const closed=!['OPEN','FULL'].includes(row.status);
+    const members=roster.rows.map(member=>
+      `${member.player}: ${member.character_name?`${member.character_name} (${member.class_name})`:'character pending'}`,
+    ).join(', ');
+    const link=`\n${origin}/parties/${row.party_id}`;
+    const summary=closed?`Party closed (${row.status.toLowerCase()}).`
+      :`${filled}/${row.party_size} filled.${wanted?` Looking for ${wanted}.`:''}${filled>=row.party_size?' Party full.':''}`;
+    const prefix=`${row.discord_message_id?'Party update':'New party'}: **${name}**\n${row.raid_name} · ${timestamp(row.start_time)}\n${summary}\nRoster: ${members||'none yet'}`;
+    // Role pings happen only on the initial post. Updates never re-ping roles.
+    const roles=!row.discord_message_id&&row.discord_ping_roles&&!closed
+      ?[missingDps?row.discord_dps_role_id:null,missingSupport?row.discord_support_role_id:null].filter(Boolean):[];
+    const mention=roles.map(id=>`<@&${id}>`).join(' ');
+    const content=`${mention?`${mention}\n`:''}${prefix}`.slice(0,2000-link.length)+link;
+    const sent=await discord(`/channels/${channel}/messages${row.discord_message_id?`/${row.discord_message_id}`:''}`,{
+      method:row.discord_message_id?'PATCH':'POST',body:JSON.stringify({
+        content,
+        allowed_mentions:{parse:[],roles},
+        ...(!row.discord_message_id?{nonce:nonce(row.party_id),enforce_nonce:true}:{}),
       }),
     });
-    await update({messageId:sent.id});
+    await pool.query(`
+      UPDATE discord_party_announcements
+      SET discord_message_id=COALESCE(discord_message_id,$2),
+          delivered_at=CASE WHEN revision=$3 THEN now() ELSE NULL END,
+          leased_until=NULL,last_error=NULL
+      WHERE party_id=$1
+    `,[row.party_id,sent.id,row.revision]);
   } catch(error) {
     if([403,404].includes(error.status)) {
       // Configuration can be fixed without losing the queued event.

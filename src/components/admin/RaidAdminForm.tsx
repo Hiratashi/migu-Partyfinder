@@ -14,6 +14,8 @@ type Raid={
   practice_supported:boolean;
   active:boolean;
   sort_order:number;
+  discord_dps_role_id:string|null;
+  discord_support_role_id:string|null;
 };
 
 export default function RaidAdminForm({
@@ -39,6 +41,8 @@ export default function RaidAdminForm({
   );
   const [active,setActive]=useState(raid?.active??true);
   const [sortOrder,setSortOrder]=useState(raid?.sort_order??100);
+  const [discordDpsRoleId,setDiscordDpsRoleId]=useState(raid?.discord_dps_role_id??"");
+  const [discordSupportRoleId,setDiscordSupportRoleId]=useState(raid?.discord_support_role_id??"");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
 
@@ -82,6 +86,8 @@ export default function RaidAdminForm({
           practiceSupported:practice,
           active,
           sortOrder,
+          discordDpsRoleId,
+          discordSupportRoleId,
         }),
       });
 
@@ -149,6 +155,15 @@ export default function RaidAdminForm({
           value={sortOrder}
           onChange={e=>setSortOrder(Number(e.target.value))}
         />
+      </label>
+
+      <label>
+        Discord DPS role ID (optional)
+        <input value={discordDpsRoleId} onChange={e=>setDiscordDpsRoleId(e.target.value.trim())} placeholder="Role ID" inputMode="numeric"/>
+      </label>
+      <label>
+        Discord support role ID (optional)
+        <input value={discordSupportRoleId} onChange={e=>setDiscordSupportRoleId(e.target.value.trim())} placeholder="Role ID" inputMode="numeric"/>
       </label>
 
       <label>

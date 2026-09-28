@@ -34,13 +34,15 @@ export async function POST(req:NextRequest) {
     const result=await query<{id:string}>(`
       INSERT INTO raids(
         slug,name,party_size,supported_stages,default_stage,
-        practice_supported,active,sort_order,group_count
+        practice_supported,active,sort_order,group_count,
+        discord_dps_role_id,discord_support_role_id
       )
-      VALUES($1,$2,$3,$4::smallint[],$5,$6,$7,$8,$9)
+      VALUES($1,$2,$3,$4::smallint[],$5,$6,$7,$8,$9,$10,$11)
       RETURNING id
     `,[
       d.slug,d.name,d.partySize,d.supportedStages,d.defaultStage,
       d.practiceSupported,d.active,d.sortOrder,d.groupCount,
+      d.discordDpsRoleId||null,d.discordSupportRoleId||null,
     ]);
 
     const id=result.rows[0].id;

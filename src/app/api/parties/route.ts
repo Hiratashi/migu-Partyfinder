@@ -97,9 +97,10 @@ export async function POST(req:NextRequest) {
         raid_id,leader_id,title,start_time,end_time,
         difficulty_stage,is_practice,practice_encounter_id,
         need_physical,need_magical,need_support,
-        composition_restricted,composition_model,need_dps,group_count
+        composition_restricted,composition_model,need_dps,group_count,
+        discord_announce,discord_ping_roles
       )
-      VALUES($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13,$14)
+      VALUES($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING id
     `,[
       raid.id,
@@ -116,6 +117,8 @@ export async function POST(req:NextRequest) {
       d.compositionModel,
       d.needDps,
       raid.group_count,
+      d.discordAnnounce,
+      d.discordPingRoles,
     ]);
 
     const id=party.rows[0].id;

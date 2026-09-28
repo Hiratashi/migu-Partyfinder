@@ -68,6 +68,7 @@ type Mem={
   role:string|null;
   icon_path:string|null;
   needs_reconfirmation:boolean;
+  reconfirmation_response:string|null;
   group_number:number|null;
 };
 
@@ -196,7 +197,8 @@ export default async function PartyPage({
       c.damage_type,
       c.role,
       c.icon_path,
-      (pr.user_id IS NOT NULL) AS needs_reconfirmation
+      (pr.user_id IS NOT NULL) AS needs_reconfirmation,
+      pr.response AS reconfirmation_response
     FROM party_members pm
     JOIN users u ON u.id=pm.user_id
     LEFT JOIN characters ch ON ch.id=pm.character_id
@@ -218,11 +220,11 @@ export default async function PartyPage({
   const isMember=membershipStatus==="ACCEPTED";
   const isInvited=membershipStatus==="INVITED";
   const reconfirmation=isMember&&["OPEN","FULL"].includes(party.status)
-    ? await query<{revision:string;change_details:NotificationChange[]}>(`
-        SELECT revision,change_details FROM party_reconfirmations
+    ? await query<{revision:string;change_details:NotificationChange[];response:string}>(`
+        SELECT revision,change_details,response FROM party_reconfirmations
         WHERE party_id=$1 AND user_id=$2
       `,[id,user.id])
-    : {rows:[] as {revision:string;change_details:NotificationChange[]}[]};
+    : {rows:[] as {revision:string;change_details:NotificationChange[];response:string}[]};
 
   const preferredCharacterRows=isInvited
     ? await query<{character_id:string}>(`
@@ -538,6 +540,7 @@ export default async function PartyPage({
         partyId={id}
         revision={reconfirmation.rows[0].revision}
         changes={reconfirmation.rows[0].change_details}
+        response={reconfirmation.rows[0].response}
       />}
 
       {!isMember&&["OPEN","FULL"].includes(party.status)&&
@@ -658,8 +661,10 @@ export default async function PartyPage({
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
                   {m.role?` - ${party.composition_model==="LEGACY"?`${m.damage_type} `:""}${m.role}`:""}
                 </div>
-                {m.needs_reconfirmation&&(canManage||m.user_id===user.id)&&["OPEN","FULL"].includes(party.status)&&
-                  <div className="muted">Needs reconfirmation · place reserved</div>}
+                {["OPEN","FULL"].includes(party.status)&&
+                  <div className="muted">{m.reconfirmation_response==="DECLINED"
+                    ? "Declined changes · place reserved"
+                    : m.needs_reconfirmation?"Awaiting response · place reserved":"Confirmed"}</div>}
               </div>
             </div>
 

@@ -4,8 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { limitWrite } from "@/lib/rate-limit";
-import { syncPartyOpenFull } from "@/lib/partyState";
-import { notifyLeaderOfLeave,resolvePartyNotifications } from "@/lib/notifications";
+import { resolvePartyNotifications } from "@/lib/notifications";
 
 const schema=z.object({action:z.enum(["ACCEPT","DECLINE"]),revision:z.uuid()});
 
@@ -46,14 +45,9 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{id:string}>
     }
 
     if(input.data.action==="DECLINE") {
-      await client.query("DELETE FROM party_members WHERE party_id=$1 AND user_id=$2",[id,user.id]);
-      await syncPartyOpenFull(id,client);
-      await notifyLeaderOfLeave(client,{
-        partyId:id,
-        leaderId:party.rows[0].leader_id,
-        memberName:user.display_name??user.username,
-        declinedChange:true,
-      });
+      await client.query(`UPDATE party_reconfirmations
+        SET response='DECLINED',updated_at=now()
+        WHERE party_id=$1 AND user_id=$2`,[id,user.id]);
     } else {
       await client.query("DELETE FROM party_reconfirmations WHERE party_id=$1 AND user_id=$2",[id,user.id]);
     }

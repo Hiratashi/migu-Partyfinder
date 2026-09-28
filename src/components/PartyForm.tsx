@@ -70,6 +70,8 @@ export default function PartyForm({
     initial?.compositionRestricted??false,
   );
   const [msg,setMsg]=useState("");
+  const [announce,setAnnounce]=useState(true);
+  const [pingRoles,setPingRoles]=useState(true);
 
   const fullRun=
     selected.length===allIds.length&&
@@ -147,6 +149,7 @@ export default function PartyForm({
       compositionModel:legacy?"LEGACY":"DPS_SUPPORT",
       needSupport:support,
       compositionRestricted:restricted,
+      ...(!partyId?{discordAnnounce:announce,discordPingRoles:announce&&pingRoles}:{}),
     };
 
     setMsg(partyId?"Saving…":"Creating…");
@@ -359,6 +362,15 @@ export default function PartyForm({
       Turn this off if your group agrees to use a different composition.
       You can also toggle it directly from the party page.
     </p>
+
+    {!partyId&&<section className="card stack">
+      <h3>Discord announcement</h3>
+      <label className="row"><input type="checkbox" checked={announce} onChange={e=>setAnnounce(e.target.checked)}/>
+        Post this party in the guild</label>
+      <label className="row"><input type="checkbox" checked={pingRoles} disabled={!announce} onChange={e=>setPingRoles(e.target.checked)}/>
+        Ping the configured DPS and support roles</label>
+      <p className="muted">Only the roles requested by this party are mentioned. Guild members can mute these roles in Discord.</p>
+    </section>}
 
     <div className="row">
       <button className="btn primary">

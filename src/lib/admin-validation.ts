@@ -17,6 +17,8 @@ export const raidAdminSchema=z.object({
   practiceSupported:z.boolean(),
   active:z.boolean(),
   sortOrder:z.number().int().min(0).max(9999),
+  discordDpsRoleId:z.union([z.literal(""),z.string().regex(/^[0-9]{17,20}$/)]).default(""),
+  discordSupportRoleId:z.union([z.literal(""),z.string().regex(/^[0-9]{17,20}$/)]).default(""),
 }).superRefine((v,ctx)=>{
   if(!v.supportedStages.includes(v.defaultStage)) {
     ctx.addIssue({

@@ -51,6 +51,8 @@ export const partySchema = z.object({
 
 export const createPartySchema = partySchema.and(z.object({
   raidSlug:z.string().trim().min(1).max(80),
+  discordAnnounce:z.boolean().default(true),
+  discordPingRoles:z.boolean().default(true),
 }));
 
 const weeklySlotSchema=z.object({

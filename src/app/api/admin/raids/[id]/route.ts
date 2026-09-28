@@ -60,12 +60,15 @@ export async function PATCH(
         practice_supported=$6,
         active=$7,
         sort_order=$8,
-        group_count=$10
+        group_count=$10,
+        discord_dps_role_id=$11,
+        discord_support_role_id=$12
       WHERE id=$9
       RETURNING id
     `,[
       d.slug,d.name,d.partySize,d.supportedStages,d.defaultStage,
       d.practiceSupported,d.active,d.sortOrder,id,d.groupCount,
+      d.discordDpsRoleId||null,d.discordSupportRoleId||null,
     ]);
 
     if(!result.rowCount) {
