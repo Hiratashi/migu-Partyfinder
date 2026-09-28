@@ -40,12 +40,13 @@ async function claim() {
       SELECT o.notification_id,n.user_id,n.kind,n.title,n.body,n.party_id,
              n.change_details,n.read_at,u.discord_id,u.access_disabled,
              u.discord_guild_alerts_enabled,u.discord_notifications_enabled,
-             p.start_time,o.attempts,
+             p.start_time,p.title AS party_title,r.name AS raid_name,o.attempts,
              o.fallback_required
       FROM discord_notification_outbox o
       JOIN notifications n ON n.id=o.notification_id
       JOIN users u ON u.id=n.user_id
       LEFT JOIN parties p ON p.id=n.party_id
+      LEFT JOIN raids r ON r.id=p.raid_id
       WHERE o.delivered_at IS NULL AND o.stopped_at IS NULL
         AND o.next_attempt_at<=now()
         AND (o.leased_until IS NULL OR o.leased_until<now())
@@ -77,15 +78,18 @@ function timestamp(value) {
   return Number.isFinite(seconds)?`<t:${seconds}:F>`:String(value);
 }
 
-function message(row) {
+function message(row,maxLength=2000) {
   const changes=Array.isArray(row.change_details)
     ? row.change_details.map(item=>
       `${item.label}: ${item.format==='datetime'?timestamp(item.before):item.before} → ${item.format==='datetime'?timestamp(item.after):item.after}`,
     ).join('\n') : '';
   const time=row.start_time && !row.change_details?.some(item=>item.label==='Start time')
     ? `\nParty time: ${timestamp(row.start_time)}` : '';
+  const party=row.raid_name
+    ? `\nParty: ${row.party_title||row.raid_name}${row.party_title?` (${row.raid_name})`:''}` : '';
   const link=row.party_id?`\n${origin}/parties/${row.party_id}`:`\n${origin}/notifications`;
-  return `**${row.title}**\n${row.body}${changes?`\n${changes}`:''}${time}${link}`.slice(0,2000);
+  const prefix=`**${row.title}**\n${row.body}${party}${changes?`\n${changes}`:''}${time}`;
+  return `${prefix.slice(0,maxLength-link.length)}${link}`;
 }
 
 async function finish(row,{messageId=null,stop=false,error=null,delay=0,method=null}={}) {
@@ -112,7 +116,7 @@ async function guildFallback(row,dmCode=null) {
   try {
     const sent=await discord(`/channels/${channel}/messages`,{
       method:'POST',body:JSON.stringify({
-        content:`<@${row.discord_id}> ${message(row)}`.slice(0,2000),
+        content:`<@${row.discord_id}> ${message(row,2000-row.discord_id.length-4)}`,
         allowed_mentions:{users:[row.discord_id]},
         nonce:nonce(row.notification_id),enforce_nonce:true,
       }),

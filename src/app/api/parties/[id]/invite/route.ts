@@ -77,13 +77,15 @@ export async function POST(
     const sameInvitation=prior.rows[0]?.status==="INVITED" &&
       JSON.stringify(prior.rows[0].preferred_ids)===JSON.stringify([...preferredCharacterIds].sort());
 
+    let preferredNames:string[]=[];
     if(preferredCharacterIds.length>0) {
-      const characters=await client.query<{id:string}>(
-        `SELECT id
-         FROM characters
-         WHERE user_id=$1
-           AND archived_at IS NULL
-           AND id=ANY($2::uuid[])`,
+      const characters=await client.query<{id:string;character_name:string;class_name:string}>(
+        `SELECT ch.id,ch.character_name,c.name AS class_name
+         FROM characters ch
+         JOIN classes c ON c.id=ch.class_id
+         WHERE ch.user_id=$1
+           AND ch.archived_at IS NULL
+           AND ch.id=ANY($2::uuid[])`,
         [body.data.userId,preferredCharacterIds],
       );
 
@@ -97,6 +99,7 @@ export async function POST(
           {status:400},
         );
       }
+      preferredNames=characters.rows.map(c=>`${c.character_name} (${c.class_name})`);
     }
 
     const invitation=await client.query(
@@ -173,7 +176,7 @@ export async function POST(
         recipients:[body.data.userId],
         kind:"PARTY_INVITATION",
         title:"Party invitation",
-        body:`${leader.display_name??leader.username} invited you to ${party.rows[0].title||party.rows[0].raid_name}.`,
+        body:`${leader.display_name??leader.username} invited you to ${party.rows[0].title||party.rows[0].raid_name}.${preferredNames.length?` Requested character${preferredNames.length===1?"":"s"}: ${preferredNames.join(", ")}.`:""}`,
       });
     }
 

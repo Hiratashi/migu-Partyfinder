@@ -37,10 +37,13 @@ export async function POST(
       return NextResponse.json({error:"leader_cannot_leave",message:"The party leader must cancel the party instead of leaving it."},{status:400});
     }
 
-    const removed=await client.query(`
+    const removed=await client.query<{user_id:string;character_name:string|null;class_name:string|null;role:string|null}>(`
       DELETE FROM party_members
       WHERE party_id=$1 AND user_id=$2 AND status='ACCEPTED'
-      RETURNING user_id
+      RETURNING user_id,
+        (SELECT ch.character_name FROM characters ch WHERE ch.id=character_id) AS character_name,
+        (SELECT c.name FROM characters ch JOIN classes c ON c.id=ch.class_id WHERE ch.id=character_id) AS class_name,
+        (SELECT c.role FROM characters ch JOIN classes c ON c.id=ch.class_id WHERE ch.id=character_id) AS role
     `,[id,user.id]);
     if(!removed.rowCount) {
       await client.query("ROLLBACK");
@@ -52,6 +55,9 @@ export async function POST(
       partyId:id,
       leaderId:party.rows[0].leader_id,
       memberName:user.display_name??user.username,
+      character:removed.rows[0].character_name
+        ? `${removed.rows[0].character_name} (${removed.rows[0].class_name})` : undefined,
+      role:removed.rows[0].role??undefined,
     });
     await client.query(`
       INSERT INTO audit_log(user_id,action,entity_type,entity_id)
