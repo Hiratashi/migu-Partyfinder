@@ -228,6 +228,12 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
 
 .active-nav { outline:1px solid #59627a; }
 
+.notification-list { list-style:none; padding:0; display:grid; gap:12px; }
+.notification-item { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:16px; border:1px solid #59627a; border-radius:10px; }
+.notification-item p { margin:8px 0; }
+.notification-actions { display:flex; gap:8px; flex-wrap:wrap; }
+@media(max-width:520px){ .notification-item { flex-direction:column; align-items:stretch; } }
+
 .account-menu { position:relative; }
 .account-popover {
   position:absolute;

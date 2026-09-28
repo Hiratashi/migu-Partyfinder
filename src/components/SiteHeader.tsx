@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AccountMenu from "./AccountMenu";
+import NotificationNav from "./NotificationNav";
 
 export default function SiteHeader({
   user,
+  unreadNotifications,
 }:{
   user:{
     username:string;
     display_name:string|null;
     is_admin:boolean;
   };
+  unreadNotifications:number;
 }) {
   const pathname=usePathname();
 
@@ -26,6 +29,7 @@ export default function SiteHeader({
     </Link>
 
     <nav className="site-nav" aria-label="Primary navigation">
+      <NotificationNav initialCount={unreadNotifications}/>
       <Link
         className={`btn ${pathname==="/my-parties"?"active-nav":""}`}
         href="/my-parties"

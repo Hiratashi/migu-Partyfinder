@@ -2,6 +2,7 @@ import "./globals.css";
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import SiteHeader from "@/components/SiteHeader";
+import { query } from "@/lib/db";
 
 export const metadata = {
   title: "Migu's Partyfinder Tool",
@@ -14,6 +15,9 @@ export default async function RootLayout({
   children:React.ReactNode;
 }) {
   const user=await currentUser();
+  const unread=user
+    ? await query<{count:string}>("SELECT count(*)::text AS count FROM notifications WHERE user_id=$1 AND read_at IS NULL",[user.id])
+    : null;
 
   return <html lang="en">
     <body>
@@ -23,7 +27,7 @@ export default async function RootLayout({
               username:user.username,
               display_name:user.display_name,
               is_admin:user.is_admin,
-            }}/>
+            }} unreadNotifications={Number(unread?.rows[0]?.count??0)}/>
           : <nav className="nav">
               <Link href="/" className="brand brand-home">
                 <span>Migu's Partyfinder</span>
