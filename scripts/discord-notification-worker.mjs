@@ -21,10 +21,11 @@ async function discord(path,options={}) {
     signal:AbortSignal.timeout(15000),
   });
   if(!response.ok) {
-    const info=response.status===429
-      ? await response.json().catch(()=>({})) : {};
+    const info=await response.json().catch(()=>({}));
     const error=new Error(`Discord API returned ${response.status}`);
     error.status=response.status;
+    // Discord's numeric code is safe to record; never log the response body.
+    error.apiCode=Number(info.code)||null;
     error.retryAfter=Number(info.retry_after)||0;
     throw error;
   }
@@ -104,6 +105,7 @@ async function deliver(row) {
     await finish(row,{stop:true,error:'No longer actionable'});
     return;
   }
+  let phase='guild membership';
   try {
     let member;
     try {
@@ -125,9 +127,11 @@ async function deliver(row) {
       await finish(row,{stop:true,error:'Required guild role absent'});
       return;
     }
+    phase='open DM';
     const dm=await discord('/users/@me/channels',{
       method:'POST',body:JSON.stringify({recipient_id:row.discord_id}),
     });
+    phase='send DM';
     const sent=await discord(`/channels/${dm.id}/messages`,{
       method:'POST',body:JSON.stringify({
         content:message(row),allowed_mentions:{parse:[]},
@@ -136,14 +140,20 @@ async function deliver(row) {
     });
     await finish(row,{messageId:sent.id});
   } catch(error) {
-    if(error.status===403 || error.status===404) {
-      await finish(row,{stop:true,error:'Discord delivery forbidden or DM blocked'});
+    const label=`${phase}: HTTP ${error.status??'network'}${error.apiCode?` / Discord ${error.apiCode}`:''}`;
+    if([50007,50278].includes(error.apiCode)) {
+      await finish(row,{stop:true,error:`${label} (recipient cannot receive DM)`});
+    } else if(error.status===403 || error.status===404) {
+      // A different 403/404 might be bot configuration rather than a user
+      // preference. Preserve the alert so a corrected setup can retry it.
+      await finish(row,{error:label,delay:3600});
+      console.error('Discord delivery retry scheduled',row.notification_id,label);
     } else {
       const backoff=error.status===429
         ? Math.min(3600,Math.max(2,Math.ceil(error.retryAfter)))
         : Math.min(3600,Math.pow(2,Math.min(row.attempts,10))*5);
-      await finish(row,{error:String(error.message).slice(0,200),delay:backoff});
-      console.error('Discord delivery retry scheduled',row.notification_id,error.message);
+      await finish(row,{error:label,delay:backoff});
+      console.error('Discord delivery retry scheduled',row.notification_id,label);
     }
   }
 }
