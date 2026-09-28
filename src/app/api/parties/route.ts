@@ -30,6 +30,9 @@ export async function POST(req:NextRequest) {
   }
 
   const d=parsed.data;
+  if(d.compositionModel!=="DPS_SUPPORT") {
+    return NextResponse.json({error:"invalid_composition_model"},{status:400});
+  }
   const raid=await getRaidBySlug(d.raidSlug);
 
   if(!raid) {
@@ -57,7 +60,7 @@ export async function POST(req:NextRequest) {
   }
 
   if(
-    d.needPhysical+d.needMagical+d.needSupport >
+    d.needDps+d.needSupport >
     raid.party_size
   ) {
     return NextResponse.json(
@@ -94,9 +97,9 @@ export async function POST(req:NextRequest) {
         raid_id,leader_id,title,start_time,end_time,
         difficulty_stage,is_practice,practice_encounter_id,
         need_physical,need_magical,need_support,
-        composition_restricted
+        composition_restricted,composition_model,need_dps
       )
-      VALUES($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11)
+      VALUES($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13)
       RETURNING id
     `,[
       raid.id,
@@ -110,6 +113,8 @@ export async function POST(req:NextRequest) {
       d.needMagical,
       d.needSupport,
       d.compositionRestricted,
+      d.compositionModel,
+      d.needDps,
     ]);
 
     const id=party.rows[0].id;

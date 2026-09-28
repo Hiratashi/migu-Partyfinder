@@ -23,13 +23,6 @@ type Initial={
   notes:string;
 };
 
-function shortDamage(value:string) {
-  if(value==="PHYSICAL")return "PHY";
-  if(value==="MAGICAL")return "MAG";
-  if(value==="HYBRID")return "HYB";
-  return value;
-}
-
 function shortRole(value:string) {
   if(value==="SUPPORT")return "SUP";
   if(value==="FLEX")return "FLEX";
@@ -245,8 +238,6 @@ export default function RaidPreferencesForm({
                     <strong>{c.character_name}</strong>
                     <small>
                       {c.abbreviation}
-                      {" \u00b7 "}
-                      {shortDamage(c.damage_type)}
                       {" \u00b7 "}
                       {shortRole(c.role)}
                     </small>

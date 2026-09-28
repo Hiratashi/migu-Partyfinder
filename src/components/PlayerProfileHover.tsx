@@ -402,7 +402,7 @@ export default function PlayerProfileHover({
                         <span className="player-hover-character-copy">
                           <strong>{character.character_name}</strong>
                           <span className="muted">
-                            {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
+                            {character.abbreviation} &middot; {character.role}
                           </span>
 
                           {character.armor_type&&

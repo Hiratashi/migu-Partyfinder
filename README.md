@@ -31,7 +31,7 @@ If you just want to use Partyfinder, start here:
 - Create, edit, join, leave, cancel and complete parties
 - Party invitations
 - Optional preferred character selection when inviting a player
-- Physical / Magical / Support composition requirements
+- DPS / Support composition requests for new parties, with optional enforcement
 - Doom Aporia encounter and stage selection
 - Practice and clear party support
 - My Parties and party history
@@ -39,6 +39,10 @@ If you just want to use Partyfinder, start here:
 - Automatic party lifecycle handling, including expiry and guild-leave cleanup
 - PostgreSQL persistence, Docker deployment and Caddy/HTTPS production hosting
 - Application health checks, same-origin protection and rate limiting
+
+Existing parties retain their original Physical / Magical / Support composition
+in their active state and history; new parties use the combined DPS / Support model. The
+suggested one-Support setup is editable, and role enforcement starts off.
 
 ## Player profiles and character setup
 

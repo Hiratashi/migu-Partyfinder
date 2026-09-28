@@ -23,9 +23,12 @@ type Row={
   party_size:number;
   members:number;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   assigned_physical:number;
+  assigned_dps:number;
   assigned_magical:number;
   assigned_support:number;
   composition_restricted:boolean;
@@ -50,6 +53,8 @@ export default async function MyParties() {
       u.username leader_username,
       r.party_size,
       p.need_physical,
+      p.need_dps,
+      p.composition_model,
       p.need_magical,
       p.need_support,
       p.composition_restricted,
@@ -68,6 +73,8 @@ export default async function MyParties() {
       mine_ch.character_name,
       mine_c.abbreviation,
       count(DISTINCT members.user_id)::int members,
+      count(DISTINCT members.user_id)
+        FILTER (WHERE member_c.role IN ('DPS','FLEX'))::int assigned_dps,
       count(DISTINCT members.user_id)
         FILTER (WHERE member_c.damage_type='PHYSICAL' AND member_c.role IN ('DPS','FLEX'))::int
         assigned_physical,
@@ -117,6 +124,7 @@ export default async function MyParties() {
     const remP=Math.max(0,p.need_physical-p.assigned_physical);
     const remM=Math.max(0,p.need_magical-p.assigned_magical);
     const remS=Math.max(0,p.need_support-p.assigned_support);
+    const remD=Math.max(0,p.need_dps-p.assigned_dps);
 
     return <PartyCard
       party={{
@@ -133,6 +141,8 @@ export default async function MyParties() {
         joined:p.members,
         partySize:p.party_size,
         remainingPhysical:remP,
+        compositionModel:p.composition_model,
+        remainingDps:remD,
         remainingMagical:remM,
         remainingSupport:remS,
         compositionRestricted:p.composition_restricted,

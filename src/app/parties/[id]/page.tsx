@@ -36,6 +36,8 @@ type P={
   encounters:string;
   practice_codes:string|null;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   composition_restricted:boolean;
@@ -136,6 +138,8 @@ export default async function PartyPage({
         WHERE ppe.party_id=p.id
       ) practice_codes,
       p.need_physical,
+      p.need_dps,
+      p.composition_model,
       p.need_magical,
       p.need_support
     FROM parties p
@@ -439,13 +443,6 @@ export default async function PartyPage({
       ...profile,
       fittingCharacters:fitting,
       fittingCapabilities,
-      hasPhysical:fitting.some(
-        c=>c.damage_type==="PHYSICAL"&&["DPS","FLEX"].includes(c.role),
-      ),
-      hasMagical:fitting.some(
-        c=>c.damage_type==="MAGICAL"&&["DPS","FLEX"].includes(c.role),
-      ),
-      hasSupport:fitting.some(c=>c.role==="SUPPORT"),
     }];
   });
 
@@ -488,17 +485,15 @@ export default async function PartyPage({
 
       <div>
         <div className="muted">Requested composition</div>
-        <strong>
-          {party.need_physical} Physical  - {" "}
-          {party.need_magical} Magical  - {" "}
-          {party.need_support} Support
-        </strong>
+        <strong>{party.composition_model==="DPS_SUPPORT"
+          ? `${party.need_dps} DPS · ${party.need_support} Support`
+          : `${party.need_physical} Physical · ${party.need_magical} Magical · ${party.need_support} Support`}</strong>
       </div>
 
       <div className="need">
-        Still requested: {currentRemaining.physical} Physical  - {" "}
-        {currentRemaining.magical} Magical  - {" "}
-        {currentRemaining.support} Support{" "}
+        Still requested: {party.composition_model==="DPS_SUPPORT"
+          ? `${currentRemaining.dps} DPS · ${currentRemaining.support} Support`
+          : `${currentRemaining.physical} Physical · ${currentRemaining.magical} Magical · ${currentRemaining.support} Support`}{" "}
         <span className="muted">
           - {members.rows.length}/{party.party_size} players
         </span>
@@ -631,7 +626,7 @@ export default async function PartyPage({
                 />
                 <div className="muted">
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
-                  {m.damage_type?` - ${m.damage_type} ${m.role}`:""}
+                  {m.role?` - ${party.composition_model==="LEGACY"?`${m.damage_type} `:""}${m.role}`:""}
                 </div>
               </div>
             </div>
@@ -658,4 +653,3 @@ export default async function PartyPage({
     </div>
   </main>;
 }
-

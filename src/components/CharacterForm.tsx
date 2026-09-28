@@ -73,7 +73,7 @@ export default function CharacterForm({
           <optgroup key={base} label={base}>
             {items.map(c=>
               <option key={c.id} value={c.id}>
-                Path {c.path_number} - {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
+                Path {c.path_number} - {c.name} ({c.abbreviation}) - {c.role}
               </option>
             )}
           </optgroup>

@@ -182,7 +182,7 @@ export default function CharacterManager({
               {c.base_character
                 ? `${c.base_character} P${c.path_number} - `
                 : ""}
-              {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
+              {c.name} ({c.abbreviation}) - {c.role}
             </option>
           )}
         </select>
@@ -237,7 +237,7 @@ export default function CharacterManager({
         <div className="character-card-copy">
           <strong>{character.character_name}</strong>
           <div className="muted character-meta">
-            {character.name} &middot; {character.damage_type} &middot; {character.role}
+            {character.name} &middot; {character.role}
           </div>
         </div>
       </div>

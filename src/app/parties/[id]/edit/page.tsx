@@ -14,6 +14,8 @@ type P={
   difficulty_stage:number;
   is_practice:boolean;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   composition_restricted:boolean;
@@ -75,6 +77,8 @@ export default async function Edit({
         isPractice:x.is_practice,
         practiceEncounterIds:practice.rows.map(s=>s.encounter_id),
         needPhysical:x.need_physical,
+        needDps:x.need_dps,
+        compositionModel:x.composition_model,
         needMagical:x.need_magical,
         needSupport:x.need_support,
         compositionRestricted:x.composition_restricted,
