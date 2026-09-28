@@ -5,6 +5,7 @@ export type RaidConfig = {
   slug:string;
   name:string;
   party_size:number;
+  group_count:number;
   supported_stages:number[];
   default_stage:number;
   practice_supported:boolean;
@@ -23,6 +24,7 @@ function normalizeRaid(row:any):RaidConfig {
   return {
     ...row,
     party_size:Number(row.party_size),
+    group_count:Number(row.group_count),
     supported_stages:(row.supported_stages??[]).map(Number),
     default_stage:Number(row.default_stage),
     practice_supported:Boolean(row.practice_supported),
@@ -38,6 +40,7 @@ export async function getActiveRaids():Promise<RaidConfig[]> {
       slug,
       name,
       party_size,
+      group_count,
       supported_stages,
       default_stage,
       practice_supported,
@@ -61,6 +64,7 @@ export async function getRaidBySlug(
       slug,
       name,
       party_size,
+      group_count,
       supported_stages,
       default_stage,
       practice_supported,
@@ -84,6 +88,7 @@ export async function getRaidById(
       slug,
       name,
       party_size,
+      group_count,
       supported_stages,
       default_stage,
       practice_supported,

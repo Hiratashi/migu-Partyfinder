@@ -8,6 +8,7 @@ type Raid={
   slug:string;
   name:string;
   party_size:number;
+  group_count:number;
   supported_stages:number[];
   default_stage:number;
   practice_supported:boolean;
@@ -26,6 +27,7 @@ export default function RaidAdminForm({
   const [slug,setSlug]=useState(raid?.slug??"");
   const [name,setName]=useState(raid?.name??"");
   const [partySize,setPartySize]=useState(raid?.party_size??6);
+  const [groupCount,setGroupCount]=useState(raid?.group_count??1);
   const [stageText,setStageText]=useState(
     (raid?.supported_stages??[1,2,3]).join(", "),
   );
@@ -74,6 +76,7 @@ export default function RaidAdminForm({
           slug,
           name,
           partySize,
+          groupCount,
           supportedStages,
           defaultStage,
           practiceSupported:practice,
@@ -146,6 +149,14 @@ export default function RaidAdminForm({
           value={sortOrder}
           onChange={e=>setSortOrder(Number(e.target.value))}
         />
+      </label>
+
+      <label>
+        Party structure
+        <select value={groupCount} onChange={e=>setGroupCount(Number(e.target.value))}>
+          <option value={1}>One group</option>
+          <option value={2}>Two Striker Parties (4 + 4)</option>
+        </select>
       </label>
 
       <label>

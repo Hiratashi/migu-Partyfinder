@@ -2,7 +2,8 @@ import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 
 type Kind="PARTY_INVITATION"|"PARTY_CHANGED"|"PARTY_CLOSED"|"PARTY_REMOVED"|
-  "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL"|"PARTY_CHARACTER_CHANGED";
+  "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL"|"PARTY_CHARACTER_CHANGED"|
+  "PARTY_GROUP_CHANGED";
 
 export async function notifyLeaderOfCharacterChange(client:PoolClient,{
   partyId,leaderId,memberName,before,after,

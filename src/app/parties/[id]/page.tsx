@@ -21,6 +21,7 @@ import CopyCharacterName from "@/components/CopyCharacterName";
 import PlayerProfileHover from "@/components/PlayerProfileHover";
 import ReconfirmationPrompt from "@/components/ReconfirmationPrompt";
 import type { NotificationChange } from "@/lib/notifications";
+import StrikerAssignment from "@/components/StrikerAssignment";
 
 type P={
   id:string;
@@ -35,6 +36,7 @@ type P={
   leader_id:string;
   raid_id:string;
   party_size:number;
+  group_count:number;
   encounters:string;
   practice_codes:string|null;
   need_physical:number;
@@ -66,6 +68,7 @@ type Mem={
   role:string|null;
   icon_path:string|null;
   needs_reconfirmation:boolean;
+  group_number:number|null;
 };
 
 type Candidate={id:string;display:string};
@@ -130,7 +133,7 @@ export default async function PartyPage({
       p.raid_id,
       p.status,
       p.composition_restricted,
-      r.name raid_name,r.party_size,
+      r.name raid_name,r.party_size,p.group_count,
       COALESCE(u.display_name,u.username) leader,
       u.username leader_username,
       string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
@@ -187,6 +190,7 @@ export default async function PartyPage({
       COALESCE(u.display_name,u.username) display,
       u.username,
       pm.character_id,
+      pm.group_number,
       ch.character_name,
       c.abbreviation,
       c.damage_type,
@@ -624,8 +628,17 @@ export default async function PartyPage({
     }
 
     <h2 className="section-title">Party members</h2>
-    <div className="grid">
-      {members.rows.map(m=>
+    {party.group_count===2&&<p className="muted">
+      Two four-player Striker Parties. The leader assigns accepted members;
+      each player, including the leader, occupies one of the eight places.
+    </p>}
+    {(party.group_count===2?[1,2,null]:[null]).map(group=>
+      <section key={group??0}>
+        {party.group_count===2&&<h3 className="section-title">
+          {group===null?"Unassigned":`Striker Party ${group} (${members.rows.filter(m=>m.group_number===group).length}/4)`}
+        </h3>}
+        <div className="grid">
+      {members.rows.filter(m=>party.group_count!==2||m.group_number===group).map(m=>
         <div className="card stack" key={m.user_id}>
           <div className="row between">
             <div className="row">
@@ -667,8 +680,13 @@ export default async function PartyPage({
               characters={changeCharacters}
             />
           }
+          {party.group_count===2&&canManage&&["OPEN","FULL"].includes(party.status)&&
+            <StrikerAssignment partyId={id} userId={m.user_id} current={m.group_number}/>
+          }
         </div>
       )}
-    </div>
+        </div>
+      </section>
+    )}
   </main>;
 }

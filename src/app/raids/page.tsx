@@ -28,6 +28,7 @@ export default async function RaidsPage() {
           </div>
           <div className="row">
             <span className="pill">{raid.party_size} players</span>
+            {raid.group_count===2&&<span className="pill">Two Striker Parties · 4 + 4</span>}
             <span className="pill">{raid.encounters} fights</span>
             <span className="pill">
               Stages {raid.supported_stages.join(", ")}

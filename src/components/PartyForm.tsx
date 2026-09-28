@@ -28,6 +28,7 @@ type Props={
   raidName:string;
   encounters:E[];
   partySize:number;
+  groupCount?:number;
   supportedStages:number[];
   defaultStage:number;
   practiceSupported:boolean;
@@ -40,6 +41,7 @@ export default function PartyForm({
   raidName,
   encounters,
   partySize,
+  groupCount=1,
   supportedStages,
   defaultStage,
   practiceSupported,
@@ -175,6 +177,10 @@ export default function PartyForm({
   }
 
   return <form onSubmit={submit} className="card form stack">
+    {groupCount===2&&<p className="muted">
+      This raid uses two four-player Striker Parties. Everyone joins the
+      eight-player roster first; the leader assigns each member to a group.
+    </p>}
     <label>
       Optional title
       <input

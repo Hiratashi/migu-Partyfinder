@@ -34,6 +34,20 @@ export async function PATCH(
 
   const d=parsed.data;
 
+  // Existing two-group parties depend on eight roster slots even if the
+  // raid is later switched back to a single group for new parties.
+  if(d.partySize!==8) {
+    const activeGroups=await query(`
+      SELECT 1 FROM parties WHERE raid_id=$1 AND group_count=2 LIMIT 1
+    `,[id]);
+    if(activeGroups.rowCount) {
+      return NextResponse.json({
+        error:"striker_parties_in_use",
+        message:"Existing Striker Parties require this raid to remain eight-player.",
+      },{status:409});
+    }
+  }
+
   try {
     const result=await query(`
       UPDATE raids
@@ -45,12 +59,13 @@ export async function PATCH(
         default_stage=$5,
         practice_supported=$6,
         active=$7,
-        sort_order=$8
+        sort_order=$8,
+        group_count=$10
       WHERE id=$9
       RETURNING id
     `,[
       d.slug,d.name,d.partySize,d.supportedStages,d.defaultStage,
-      d.practiceSupported,d.active,d.sortOrder,id,
+      d.practiceSupported,d.active,d.sortOrder,id,d.groupCount,
     ]);
 
     if(!result.rowCount) {
