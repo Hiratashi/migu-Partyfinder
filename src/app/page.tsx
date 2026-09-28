@@ -19,9 +19,12 @@ type PartyRow={
   members:number;
   party_size:number;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   assigned_physical:number;
+  assigned_dps:number;
   assigned_magical:number;
   assigned_support:number;
   composition_restricted:boolean;
@@ -80,11 +83,15 @@ export default async function Home() {
       u.username leader_username,
       r.party_size,
       p.need_physical,
+      p.need_dps,
+      p.composition_model,
       p.need_magical,
       p.need_support,
       p.composition_restricted,
       string_agg(DISTINCT e.code, ', ' ORDER BY e.code) encounters,
       count(DISTINCT pm.user_id)::int members,
+      count(DISTINCT pm.user_id)
+        FILTER (WHERE c.role IN ('DPS','FLEX'))::int assigned_dps,
       count(DISTINCT pm.user_id)
         FILTER (
           WHERE c.damage_type='PHYSICAL'
@@ -158,6 +165,7 @@ export default async function Home() {
         const remP=Math.max(0,p.need_physical-p.assigned_physical);
         const remM=Math.max(0,p.need_magical-p.assigned_magical);
         const remS=Math.max(0,p.need_support-p.assigned_support);
+        const remD=Math.max(0,p.need_dps-p.assigned_dps);
 
         return <PartyCard
           key={p.id}
@@ -175,6 +183,8 @@ export default async function Home() {
             joined:p.members,
             partySize:p.party_size,
             remainingPhysical:remP,
+            compositionModel:p.composition_model,
+            remainingDps:remD,
             remainingMagical:remM,
             remainingSupport:remS,
             compositionRestricted:p.composition_restricted,

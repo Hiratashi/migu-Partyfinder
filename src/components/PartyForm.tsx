@@ -17,6 +17,8 @@ type Initial={
   practiceEncounterIds?:string[];
   needPhysical:number;
   needMagical:number;
+  needDps:number;
+  compositionModel:"LEGACY"|"DPS_SUPPORT";
   needSupport:number;
   compositionRestricted?:boolean;
 };
@@ -59,9 +61,11 @@ export default function PartyForm({
   );
   const [physical,setPhysical]=useState(initial?.needPhysical??0);
   const [magical,setMagical]=useState(initial?.needMagical??0);
-  const [support,setSupport]=useState(initial?.needSupport??0);
+  const legacy=initial?.compositionModel==="LEGACY";
+  const [dps,setDps]=useState(initial?.needDps??Math.max(0,partySize-1));
+  const [support,setSupport]=useState(initial?.needSupport??(partySize>1?1:0));
   const [restricted,setRestricted]=useState(
-    initial?.compositionRestricted??true,
+    initial?.compositionRestricted??false,
   );
   const [msg,setMsg]=useState("");
 
@@ -69,7 +73,7 @@ export default function PartyForm({
     selected.length===allIds.length&&
     allIds.every(id=>selected.includes(id));
 
-  const totalRequested=physical+magical+support;
+  const totalRequested=(legacy?physical+magical:dps)+support;
 
   function toggleEncounter(id:string) {
     setSelected(v=>{
@@ -135,8 +139,10 @@ export default function PartyForm({
       isPractice:practiceSupported?practice:false,
       practiceEncounterIds:
         practiceSupported&&practice?practiceIds:[],
-      needPhysical:physical,
-      needMagical:magical,
+      needPhysical:legacy?physical:0,
+      needMagical:legacy?magical:0,
+      needDps:legacy?0:dps,
+      compositionModel:legacy?"LEGACY":"DPS_SUPPORT",
       needSupport:support,
       compositionRestricted:restricted,
     };
@@ -294,6 +300,7 @@ export default function PartyForm({
       </p>
 
       <div className="need-grid">
+        {legacy ? <>
         <CountSelector
           label="Physical DPS"
           value={physical}
@@ -308,10 +315,17 @@ export default function PartyForm({
           displayMax={partySize}
           onChange={setMagical}
         />
+        </> : <CountSelector
+          label="DPS"
+          value={dps}
+          max={Math.max(0,partySize-support)}
+          displayMax={partySize}
+          onChange={setDps}
+        />}
         <CountSelector
           label="Support"
           value={support}
-          max={Math.max(0,partySize-physical-magical)}
+          max={Math.max(0,partySize-(legacy?physical+magical:dps))}
           displayMax={partySize}
           onChange={setSupport}
         />

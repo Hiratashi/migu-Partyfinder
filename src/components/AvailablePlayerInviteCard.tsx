@@ -88,7 +88,7 @@ export default function AvailablePlayerInviteCard({
             <strong>{character.name}</strong>
 
             <div className="muted">
-              {character.abbreviation} &middot; {character.damage_type} &middot; {character.role}
+              {character.abbreviation} &middot; {character.role}
             </div>
 
             {character.armor_type&&

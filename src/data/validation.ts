@@ -10,9 +10,14 @@ export const partySchema = z.object({
   practiceEncounterIds: z.array(z.string().uuid()).max(30).default([]),
   needPhysical: z.number().int().min(0).max(12),
   needMagical: z.number().int().min(0).max(12),
+  needDps: z.number().int().min(0).max(12).default(0),
+  compositionModel: z.enum(["LEGACY","DPS_SUPPORT"]).default("LEGACY"),
   needSupport: z.number().int().min(0).max(12),
   compositionRestricted: z.boolean().default(true),
 }).superRefine((v,ctx)=>{
+  if(v.compositionModel==="DPS_SUPPORT" && (v.needPhysical!==0 || v.needMagical!==0)) {
+    ctx.addIssue({code:"custom",message:"Combined DPS parties cannot request physical or magical slots",path:["compositionModel"]});
+  }
   const start=new Date(v.startTime);
   if(start.getTime()<=Date.now()-5_000) {
     ctx.addIssue({

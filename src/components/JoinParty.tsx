@@ -136,7 +136,7 @@ export default function JoinParty({
             disabled={c.eligible===false}
           >
             {preferredSet.has(c.id)?"[Preferred] ":""}
-            {c.character_name} - {c.name} ({c.abbreviation}) - {c.damage_type} {c.role}
+            {c.character_name} - {c.name} ({c.abbreviation}) - {c.role}
             {c.eligible===false
               ? ` - ${c.reason??"not currently needed"}`
               : ""}

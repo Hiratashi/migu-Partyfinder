@@ -12,6 +12,8 @@ const schema=z.object({characterId:z.string().uuid()});
 type Party={
   party_size:number;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   composition_restricted:boolean;
@@ -70,6 +72,8 @@ export async function POST(
       SELECT
         r.party_size,
         p.need_physical,
+        p.need_dps,
+        p.composition_model,
         p.need_magical,
         p.need_support,
         p.composition_restricted,
@@ -95,7 +99,7 @@ export async function POST(
       SELECT ch.id,c.damage_type,c.role
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
-      WHERE ch.id=$1 AND ch.user_id=$2
+      WHERE ch.id=$1 AND ch.user_id=$2 AND ch.archived_at IS NULL
     `,[body.data.characterId,user.id]);
 
     if(!cr.rowCount) {

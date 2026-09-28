@@ -16,6 +16,8 @@ type Props={
     joined:number;
     partySize:number;
     remainingPhysical:number;
+    compositionModel?:"LEGACY"|"DPS_SUPPORT";
+    remainingDps?:number;
     remainingMagical:number;
     remainingSupport:number;
     compositionRestricted?:boolean;
@@ -82,9 +84,9 @@ export default function PartyCard({
     <div className="party-needs">
       <span>Still wanted</span>
       <strong>
-        {party.remainingPhysical} Physical  - {" "}
-        {party.remainingMagical} Magical  - {" "}
-        {party.remainingSupport} Support
+        {party.compositionModel==="DPS_SUPPORT"
+          ? `${party.remainingDps??0} DPS · ${party.remainingSupport} Support`
+          : `${party.remainingPhysical} Physical · ${party.remainingMagical} Magical · ${party.remainingSupport} Support`}
       </strong>
       {typeof party.compositionRestricted==="boolean"&&
         <small className="muted">

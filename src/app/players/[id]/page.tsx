@@ -220,7 +220,7 @@ export default async function PlayerProfile({
                   </strong>
 
                   <div className="muted">
-                    {character.name} &middot; {character.damage_type} &middot; {character.role}
+                    {character.name} &middot; {character.role}
                   </div>
 
                   {character.armor_type&&

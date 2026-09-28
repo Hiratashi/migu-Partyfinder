@@ -33,8 +33,8 @@ export async function PATCH(
     );
   }
 
-  const owned=await query<{raid_id:string}>(`
-    SELECT raid_id
+  const owned=await query<{raid_id:string;composition_model:string}>(`
+    SELECT raid_id,composition_model
     FROM parties
     WHERE id=$1
       AND leader_id=$2
@@ -51,6 +51,9 @@ export async function PATCH(
   }
 
   const d=parsed.data;
+  if(d.compositionModel!==owned.rows[0].composition_model) {
+    return NextResponse.json({error:"composition_model_locked"},{status:409});
+  }
 
   if(!raidSupportsStage(raid,d.difficultyStage)) {
     return NextResponse.json(
@@ -67,7 +70,7 @@ export async function PATCH(
   }
 
   if(
-    d.needPhysical+d.needMagical+d.needSupport >
+    (d.compositionModel==="DPS_SUPPORT"?d.needDps:d.needPhysical+d.needMagical)+d.needSupport >
     raid.party_size
   ) {
     return NextResponse.json(
@@ -109,6 +112,7 @@ export async function PATCH(
         need_magical=$7,
         need_support=$8,
         composition_restricted=$9,
+        need_dps=$11,
         updated_at=now()
       WHERE id=$10
     `,[
@@ -122,6 +126,7 @@ export async function PATCH(
       d.needSupport,
       d.compositionRestricted,
       id,
+      d.needDps,
     ]);
 
     await client.query(

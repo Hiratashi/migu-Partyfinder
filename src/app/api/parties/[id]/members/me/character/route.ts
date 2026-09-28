@@ -11,6 +11,8 @@ const schema=z.object({characterId:z.string().uuid()});
 type Party={
   party_size:number;
   need_physical:number;
+  need_dps:number;
+  composition_model:"LEGACY"|"DPS_SUPPORT";
   need_magical:number;
   need_support:number;
   composition_restricted:boolean;
@@ -52,6 +54,8 @@ export async function PATCH(
     const partyR=await client.query<Party>(`
       SELECT
         p.need_physical,
+        p.need_dps,
+        p.composition_model,
         p.need_magical,
         p.need_support,
         p.composition_restricted,
