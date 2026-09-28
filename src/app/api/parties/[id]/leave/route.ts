@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { syncPartyOpenFull } from "@/lib/partyState";
 import { limitWrite } from "@/lib/rate-limit";
-import { resolvePartyNotifications } from "@/lib/notifications";
+import { notifyLeaderOfLeave,resolvePartyNotifications } from "@/lib/notifications";
 
 export async function POST(
   req:NextRequest,
@@ -48,6 +48,11 @@ export async function POST(
     }
     await syncPartyOpenFull(id,client);
     await resolvePartyNotifications(client,id,[user.id]);
+    await notifyLeaderOfLeave(client,{
+      partyId:id,
+      leaderId:party.rows[0].leader_id,
+      memberName:user.display_name??user.username,
+    });
     await client.query(`
       INSERT INTO audit_log(user_id,action,entity_type,entity_id)
       VALUES($1,'PARTY_LEAVE','party',$2)

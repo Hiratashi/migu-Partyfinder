@@ -6,11 +6,13 @@ import { sameOrigin } from "@/lib/security";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import { syncPartyOpenFull } from "@/lib/partyState";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyLeaderOfJoin } from "@/lib/notifications";
 
 const schema=z.object({characterId:z.string().uuid()});
 
 type Party={
   id:string;
+  leader_id:string;
   party_size:number;
   need_physical:number;
   need_dps:number;
@@ -57,6 +59,7 @@ export async function POST(
     const pr=await client.query<Party>(`
       SELECT
         p.id,
+        p.leader_id,
         r.party_size,
         p.need_physical,
         p.need_dps,
@@ -151,7 +154,17 @@ export async function POST(
         joined_at=now()
     `,[id,user.id,body.data.characterId]);
 
-    await syncPartyOpenFull(id,client);
+    const capacity=await syncPartyOpenFull(id,client);
+
+    if(!already.rowCount&&user.id!==party.leader_id) {
+      await notifyLeaderOfJoin(client,{
+        partyId:id,
+        leaderId:party.leader_id,
+        memberName:user.display_name??user.username,
+        becameFull:acceptedCount<party.party_size &&
+          Boolean(capacity&&capacity.accepted>=party.party_size),
+      });
+    }
 
     await client.query(
       "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'PARTY_JOIN','party',$2)",
