@@ -6,10 +6,12 @@ import { sameOrigin } from "@/lib/security";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import { syncPartyOpenFull } from "@/lib/partyState";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyLeaderOfJoin } from "@/lib/notifications";
 
 const schema=z.object({characterId:z.string().uuid()});
 
 type Party={
+  leader_id:string;
   party_size:number;
   need_physical:number;
   need_dps:number;
@@ -52,24 +54,9 @@ export async function POST(
   try {
     await client.query("BEGIN");
 
-    const invitation=await client.query(
-      `SELECT 1
-       FROM party_members
-       WHERE party_id=$1 AND user_id=$2 AND status='INVITED'
-       FOR UPDATE`,
-      [id,user.id],
-    );
-
-    if(!invitation.rowCount) {
-      await client.query("ROLLBACK");
-      return NextResponse.json(
-        {error:"invitation_not_found"},
-        {status:404},
-      );
-    }
-
     const pr=await client.query<Party>(`
       SELECT
+        p.leader_id,
         r.party_size,
         p.need_physical,
         p.need_dps,
@@ -90,6 +77,18 @@ export async function POST(
     }
 
     const party=pr.rows[0];
+
+    // Lock party before membership, matching the other membership mutations.
+    const invitation=await client.query(
+      `SELECT 1 FROM party_members
+       WHERE party_id=$1 AND user_id=$2 AND status='INVITED'
+       FOR UPDATE`,
+      [id,user.id],
+    );
+    if(!invitation.rowCount) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({error:"invitation_not_found"},{status:404});
+    }
 
     const cr=await client.query<{
       id:string;
@@ -151,7 +150,16 @@ export async function POST(
       [id,user.id],
     );
 
-    await syncPartyOpenFull(id,client);
+    const capacity=await syncPartyOpenFull(id,client);
+    if(user.id!==party.leader_id) {
+      await notifyLeaderOfJoin(client,{
+        partyId:id,
+        leaderId:party.leader_id,
+        memberName:user.display_name??user.username,
+        becameFull:mr.rows.length<party.party_size &&
+          Boolean(capacity&&capacity.accepted>=party.party_size),
+      });
+    }
 
     await client.query(
       "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'PARTY_INVITE_ACCEPT','party',$2)",

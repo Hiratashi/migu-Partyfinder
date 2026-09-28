@@ -6,11 +6,13 @@ import { sameOrigin } from "@/lib/security";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import { syncPartyOpenFull } from "@/lib/partyState";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyLeaderOfCharacterChange,notifyLeaderOfJoin } from "@/lib/notifications";
 
 const schema=z.object({characterId:z.string().uuid()});
 
 type Party={
   id:string;
+  leader_id:string;
   party_size:number;
   need_physical:number;
   need_dps:number;
@@ -57,6 +59,7 @@ export async function POST(
     const pr=await client.query<Party>(`
       SELECT
         p.id,
+        p.leader_id,
         r.party_size,
         p.need_physical,
         p.need_dps,
@@ -85,10 +88,12 @@ export async function POST(
 
     const cr=await client.query<{
       id:string;
+      character_name:string;
+      class_name:string;
       damage_type:string;
       role:string;
     }>(`
-      SELECT ch.id,c.damage_type,c.role
+      SELECT ch.id,ch.character_name,c.name AS class_name,c.damage_type,c.role
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
       WHERE ch.id=$1 AND ch.user_id=$2 AND ch.archived_at IS NULL
@@ -109,10 +114,16 @@ export async function POST(
         AND pm.user_id<>$2
     `,[id,user.id]);
 
-    const already=await client.query(
-      `SELECT 1
-       FROM party_members
-       WHERE party_id=$1 AND user_id=$2 AND status='ACCEPTED'`,
+    const already=await client.query<{
+      character_id:string|null;
+      character_name:string|null;
+      class_name:string|null;
+    }>(
+      `SELECT pm.character_id,ch.character_name,c.name AS class_name
+       FROM party_members pm
+       LEFT JOIN characters ch ON ch.id=pm.character_id
+       LEFT JOIN classes c ON c.id=ch.class_id
+       WHERE pm.party_id=$1 AND pm.user_id=$2 AND pm.status='ACCEPTED'`,
       [id,user.id],
     );
 
@@ -151,7 +162,30 @@ export async function POST(
         joined_at=now()
     `,[id,user.id,body.data.characterId]);
 
-    await syncPartyOpenFull(id,client);
+    const capacity=await syncPartyOpenFull(id,client);
+
+    if(!already.rowCount&&user.id!==party.leader_id) {
+      await notifyLeaderOfJoin(client,{
+        partyId:id,
+        leaderId:party.leader_id,
+        memberName:user.display_name??user.username,
+        becameFull:acceptedCount<party.party_size &&
+          Boolean(capacity&&capacity.accepted>=party.party_size),
+      });
+    } else if(
+      already.rowCount &&
+      already.rows[0].character_id!==body.data.characterId &&
+      user.id!==party.leader_id
+    ) {
+      await notifyLeaderOfCharacterChange(client,{
+        partyId:id,leaderId:party.leader_id,
+        memberName:user.display_name??user.username,
+        before:already.rows[0].character_name
+          ? `${already.rows[0].character_name} (${already.rows[0].class_name})`
+          : "no character selected",
+        after:`${cr.rows[0].character_name} (${cr.rows[0].class_name})`,
+      });
+    }
 
     await client.query(
       "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'PARTY_JOIN','party',$2)",

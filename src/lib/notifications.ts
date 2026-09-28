@@ -1,7 +1,68 @@
 import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 
-type Kind="PARTY_INVITATION"|"PARTY_CHANGED";
+type Kind="PARTY_INVITATION"|"PARTY_CHANGED"|"PARTY_CLOSED"|"PARTY_REMOVED"|
+  "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL"|"PARTY_CHARACTER_CHANGED";
+
+export async function notifyLeaderOfCharacterChange(client:PoolClient,{
+  partyId,leaderId,memberName,before,after,
+}: {
+  partyId:string;
+  leaderId:string;
+  memberName:string;
+  before:string;
+  after:string;
+}) {
+  await notifyUsers(client,{
+    partyId,recipients:[leaderId],kind:"PARTY_CHARACTER_CHANGED",
+    title:"Player changed character",
+    body:`${memberName} changed from ${before} to ${after}.`,
+  });
+}
+
+export async function notifyLeaderOfJoin(client:PoolClient,{
+  partyId,leaderId,memberName,becameFull,
+}: {
+  partyId:string;
+  leaderId:string;
+  memberName:string;
+  becameFull:boolean;
+}) {
+  await notifyUsers(client,{
+    partyId,recipients:[leaderId],kind:"PARTY_JOINED",title:"Player joined your party",
+    body:`${memberName} joined your party.`,
+  });
+  if(becameFull) {
+    await notifyUsers(client,{
+      partyId,recipients:[leaderId],kind:"PARTY_FULL",title:"Your party is full",
+      body:"All places in your party are now occupied.",
+    });
+  }
+}
+
+export async function notifyLeaderOfLeave(client:PoolClient,{
+  partyId,leaderId,memberName,declinedChange=false,
+}: {
+  partyId:string;
+  leaderId:string;
+  memberName:string;
+  declinedChange?:boolean;
+}) {
+  await notifyUsers(client,{
+    partyId,recipients:[leaderId],kind:"PARTY_LEFT",title:"Player left your party",
+    body:declinedChange
+      ? `${memberName} declined the changed party details and left.`
+      : `${memberName} left your party.`,
+  });
+}
+
+export async function resolvePartyNotifications(client:PoolClient,partyId:string,recipients?:string[]) {
+  await client.query(`
+    UPDATE notifications SET read_at=COALESCE(read_at,now())
+    WHERE party_id=$1 AND kind IN ('PARTY_INVITATION','PARTY_CHANGED')
+      AND ($2::uuid[] IS NULL OR user_id=ANY($2::uuid[]))
+  `,[partyId,recipients??null]);
+}
 
 export type NotificationChange={
   label:string;

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { writeAudit } from "@/lib/audit";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyUsers,resolvePartyNotifications } from "@/lib/notifications";
 
 const schema=z.object({
   reason:z.string().trim().max(300).optional(),
@@ -75,6 +76,20 @@ export async function POST(
         updated_at=now()
       WHERE id=$1
     `,[id]);
+
+    await client.query("DELETE FROM party_reconfirmations WHERE party_id=$1",[id]);
+    const recipients=await client.query<{user_id:string}>(`
+      SELECT user_id FROM party_members
+      WHERE party_id=$1 AND status IN ('ACCEPTED','INVITED')
+    `,[id]);
+    await resolvePartyNotifications(client,id);
+    await notifyUsers(client,{
+      partyId:id,
+      recipients:recipients.rows.map(row=>row.user_id),
+      kind:"PARTY_CLOSED",
+      title:"Party cancelled",
+      body:"An administrator cancelled this party. Any pending response is closed.",
+    });
 
     await writeAudit({
       userId:admin.id,

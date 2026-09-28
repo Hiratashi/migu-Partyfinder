@@ -5,10 +5,12 @@ import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyLeaderOfCharacterChange } from "@/lib/notifications";
 
 const schema=z.object({characterId:z.string().uuid()});
 
 type Party={
+  leader_id:string;
   party_size:number;
   need_physical:number;
   need_dps:number;
@@ -53,6 +55,7 @@ export async function PATCH(
 
     const partyR=await client.query<Party>(`
       SELECT
+        p.leader_id,
         p.need_physical,
         p.need_dps,
         p.composition_model,
@@ -75,10 +78,16 @@ export async function PATCH(
       return NextResponse.json({error:"party_unavailable"},{status:404});
     }
 
-    const membership=await client.query(
-      `SELECT 1
-       FROM party_members
-       WHERE party_id=$1 AND user_id=$2 AND status='ACCEPTED'`,
+    const membership=await client.query<{
+      character_id:string|null;
+      character_name:string|null;
+      class_name:string|null;
+    }>(
+      `SELECT pm.character_id,ch.character_name,c.name AS class_name
+       FROM party_members pm
+       LEFT JOIN characters ch ON ch.id=pm.character_id
+       LEFT JOIN classes c ON c.id=ch.class_id
+       WHERE pm.party_id=$1 AND pm.user_id=$2 AND pm.status='ACCEPTED'`,
       [id,user.id],
     );
 
@@ -88,10 +97,12 @@ export async function PATCH(
     }
 
     const character=await client.query<{
+      character_name:string;
+      class_name:string;
       damage_type:string;
       role:string;
     }>(`
-      SELECT c.damage_type,c.role
+      SELECT ch.character_name,c.name AS class_name,c.damage_type,c.role
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
       WHERE ch.id=$1
@@ -102,6 +113,11 @@ export async function PATCH(
     if(!character.rowCount) {
       await client.query("ROLLBACK");
       return NextResponse.json({error:"invalid_character"},{status:400});
+    }
+
+    if(membership.rows[0].character_id===body.data.characterId) {
+      await client.query("COMMIT");
+      return NextResponse.json({ok:true});
     }
 
     const otherMembers=await client.query<Member>(`
@@ -140,6 +156,17 @@ export async function PATCH(
        WHERE party_id=$2 AND user_id=$3`,
       [body.data.characterId,id,user.id],
     );
+
+    if(user.id!==partyR.rows[0].leader_id) {
+      await notifyLeaderOfCharacterChange(client,{
+        partyId:id,leaderId:partyR.rows[0].leader_id,
+        memberName:user.display_name??user.username,
+        before:membership.rows[0].character_name
+          ? `${membership.rows[0].character_name} (${membership.rows[0].class_name})`
+          : "no character selected",
+        after:`${character.rows[0].character_name} (${character.rows[0].class_name})`,
+      });
+    }
 
     await client.query(
       "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'PARTY_CHARACTER_CHANGE','party',$2)",
