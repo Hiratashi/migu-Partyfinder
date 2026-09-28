@@ -7,6 +7,7 @@ import { getRaidById, raidSupportsStage } from "@/lib/raids";
 import { limitWrite } from "@/lib/rate-limit";
 import { notifyUsers } from "@/lib/notifications";
 import type { NotificationChange } from "@/lib/notifications";
+import { requestReconfirmation } from "@/lib/reconfirmation";
 
 export async function PATCH(
   req:NextRequest,
@@ -141,15 +142,14 @@ export async function PATCH(
     add("time","End time",previous.end_time?.toISOString()??"None",d.endTime?new Date(d.endTime).toISOString():"None","datetime");
     add("stage","Stage",String(previous.difficulty_stage),String(d.difficultyStage));
     add("practice mode","Practice mode",previous.is_practice?"Yes":"No",d.isPractice?"Yes":"No");
-    if(previous.need_physical!==d.needPhysical || previous.need_magical!==d.needMagical ||
-       previous.need_dps!==d.needDps || previous.need_support!==d.needSupport ||
-       previous.composition_restricted!==d.compositionRestricted) {
-      const composition=(physical:number,magical:number,dps:number,support:number,restricted:boolean)=>
-        `${d.compositionModel==="DPS_SUPPORT"?`${dps} DPS`:`${physical} physical, ${magical} magical`}, ${support} support · ${restricted?"enforced":"flexible"}`;
-      add("role composition","Role composition",
-        composition(previous.need_physical,previous.need_magical,previous.need_dps,previous.need_support,previous.composition_restricted),
-        composition(d.needPhysical,d.needMagical,d.needDps,d.needSupport,d.compositionRestricted));
-    }
+    const composition=(physical:number,magical:number,dps:number,support:number)=>
+      `${d.compositionModel==="DPS_SUPPORT"?`${dps} DPS`:`${physical} physical, ${magical} magical`}, ${support} support`;
+    add("role composition","Role composition",
+      composition(previous.need_physical,previous.need_magical,previous.need_dps,previous.need_support),
+      composition(d.needPhysical,d.needMagical,d.needDps,d.needSupport));
+    add("role composition","Role matching",
+      previous.composition_restricted?"Enforced":"Open",
+      d.compositionRestricted?"Enforced":"Open");
     const names=new Map(allowed.rows.map(row=>[row.id,`${row.code} ${row.name}`]));
     const encounterText=(ids:string[])=>ids.map(id=>names.get(id)??id).sort().join(", ")||"None";
     add("encounters","Encounters",encounterText(previous.encounters),encounterText(d.encounters));
@@ -214,13 +214,10 @@ export async function PATCH(
     );
 
     if(changes.length) {
-      const members=await client.query<{user_id:string}>(`
-        SELECT user_id FROM party_members
-        WHERE party_id=$1 AND user_id<>$2 AND status IN ('ACCEPTED','INVITED')
-      `,[id,user.id]);
+      const recipients=await requestReconfirmation(client,id,user.id,changeDetails);
       await notifyUsers(client,{
         partyId:id,
-        recipients:members.rows.map(member=>member.user_id),
+        recipients,
         kind:"PARTY_CHANGED",
         title:"Party details changed",
         body:`The party ${changes.join(", ")} changed. Review the updated details.`,

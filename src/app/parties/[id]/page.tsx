@@ -19,6 +19,8 @@ import {
 import { characterAllowed, remainingNeeds } from "@/lib/party-composition";
 import CopyCharacterName from "@/components/CopyCharacterName";
 import PlayerProfileHover from "@/components/PlayerProfileHover";
+import ReconfirmationPrompt from "@/components/ReconfirmationPrompt";
+import type { NotificationChange } from "@/lib/notifications";
 
 type P={
   id:string;
@@ -63,6 +65,7 @@ type Mem={
   damage_type:string|null;
   role:string|null;
   icon_path:string|null;
+  needs_reconfirmation:boolean;
 };
 
 type Candidate={id:string;display:string};
@@ -188,11 +191,13 @@ export default async function PartyPage({
       c.abbreviation,
       c.damage_type,
       c.role,
-      c.icon_path
+      c.icon_path,
+      (pr.user_id IS NOT NULL) AS needs_reconfirmation
     FROM party_members pm
     JOIN users u ON u.id=pm.user_id
     LEFT JOIN characters ch ON ch.id=pm.character_id
     LEFT JOIN classes c ON c.id=ch.class_id
+    LEFT JOIN party_reconfirmations pr ON pr.party_id=pm.party_id AND pr.user_id=pm.user_id
     WHERE pm.party_id=$1
       AND pm.status='ACCEPTED'
     ORDER BY pm.joined_at
@@ -208,6 +213,12 @@ export default async function PartyPage({
   const membershipStatus=membership.rows[0]?.status??null;
   const isMember=membershipStatus==="ACCEPTED";
   const isInvited=membershipStatus==="INVITED";
+  const reconfirmation=isMember&&["OPEN","FULL"].includes(party.status)
+    ? await query<{revision:string;change_details:NotificationChange[]}>(`
+        SELECT revision,change_details FROM party_reconfirmations
+        WHERE party_id=$1 AND user_id=$2
+      `,[id,user.id])
+    : {rows:[] as {revision:string;change_details:NotificationChange[]}[]};
 
   const preferredCharacterRows=isInvited
     ? await query<{character_id:string}>(`
@@ -519,6 +530,12 @@ export default async function PartyPage({
         status={party.status}
       />
 
+      {reconfirmation.rows[0]&&<ReconfirmationPrompt
+        partyId={id}
+        revision={reconfirmation.rows[0].revision}
+        changes={reconfirmation.rows[0].change_details}
+      />}
+
       {!isMember&&["OPEN","FULL"].includes(party.status)&&
         (openSeats>0
           ? <JoinParty
@@ -628,6 +645,8 @@ export default async function PartyPage({
                   {m.character_name?<CopyCharacterName name={m.character_name}/>:"No character selected"}
                   {m.role?` - ${party.composition_model==="LEGACY"?`${m.damage_type} `:""}${m.role}`:""}
                 </div>
+                {m.needs_reconfirmation&&(canManage||m.user_id===user.id)&&["OPEN","FULL"].includes(party.status)&&
+                  <div className="muted">Needs reconfirmation · place reserved</div>}
               </div>
             </div>
 

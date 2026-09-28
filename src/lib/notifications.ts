@@ -1,7 +1,15 @@
 import type { PoolClient } from "pg";
 import { randomUUID } from "node:crypto";
 
-type Kind="PARTY_INVITATION"|"PARTY_CHANGED";
+type Kind="PARTY_INVITATION"|"PARTY_CHANGED"|"PARTY_CLOSED"|"PARTY_REMOVED";
+
+export async function resolvePartyNotifications(client:PoolClient,partyId:string,recipients?:string[]) {
+  await client.query(`
+    UPDATE notifications SET read_at=COALESCE(read_at,now())
+    WHERE party_id=$1 AND kind IN ('PARTY_INVITATION','PARTY_CHANGED')
+      AND ($2::uuid[] IS NULL OR user_id=ANY($2::uuid[]))
+  `,[partyId,recipients??null]);
+}
 
 export type NotificationChange={
   label:string;
