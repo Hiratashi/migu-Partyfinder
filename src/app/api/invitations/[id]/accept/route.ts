@@ -92,10 +92,12 @@ export async function POST(
 
     const cr=await client.query<{
       id:string;
+      character_name:string;
+      class_name:string;
       damage_type:string;
       role:string;
     }>(`
-      SELECT ch.id,c.damage_type,c.role
+      SELECT ch.id,ch.character_name,c.name AS class_name,c.damage_type,c.role
       FROM characters ch
       JOIN classes c ON c.id=ch.class_id
       WHERE ch.id=$1 AND ch.user_id=$2 AND ch.archived_at IS NULL
@@ -156,6 +158,7 @@ export async function POST(
         partyId:id,
         leaderId:party.leader_id,
         memberName:user.display_name??user.username,
+        character:`${cr.rows[0].character_name} (${cr.rows[0].class_name})`,
         becameFull:mr.rows.length<party.party_size &&
           Boolean(capacity&&capacity.accepted>=party.party_size),
       });

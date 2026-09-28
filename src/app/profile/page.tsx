@@ -32,6 +32,7 @@ type Ch={
 type ProfileRow={
   profile_image_path:string|null;
   discord_guild_alerts_enabled:boolean;
+  discord_notifications_enabled:boolean;
 };
 
 type Capability={
@@ -86,7 +87,7 @@ export default async function Profile() {
       ORDER BY ch.character_name
     `,[user.id]),
     query<ProfileRow>(`
-      SELECT profile_image_path,discord_guild_alerts_enabled
+      SELECT profile_image_path,discord_guild_alerts_enabled,discord_notifications_enabled
       FROM users
       WHERE id=$1
     `,[user.id]),
@@ -158,7 +159,10 @@ export default async function Profile() {
       discordAvatarUrl={user.avatar_url}
     />
 
-    <DiscordFallbackPreference initial={profile.rows[0]?.discord_guild_alerts_enabled??false}/>
+    <DiscordFallbackPreference
+      initialEnabled={profile.rows[0]?.discord_notifications_enabled??true}
+      initialGuild={profile.rows[0]?.discord_guild_alerts_enabled??false}
+    />
 
     <section className="profile-character-section">
       <div className="profile-section-heading">

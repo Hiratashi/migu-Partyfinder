@@ -19,8 +19,10 @@ deleted when the application next serves an authenticated request. Migration
    Optionally set `DISCORD_ALERT_CHANNEL_ID` to a read-only channel for private
    alert fallbacks. It can be the same channel as announcements. A member must
    enable the fallback in Profile & characters before the worker posts a
-   generic mention if Discord rejects their DM. The message links only to
-   their website inbox; the guild can see who was mentioned, not why.
+   mention if Discord rejects their DM. The guild message includes the same
+   notification details as the DM, so other members can read them. Discord
+   delivery is enabled by default; members can disable all Discord alerts in
+   Profile & characters without affecting their website inbox.
 3. Run migrations through the usual Compose deployment. Start the bot with
    `docker compose --profile discord up -d --build`. Without this profile the
    website continues to work and the queue waits for the worker.

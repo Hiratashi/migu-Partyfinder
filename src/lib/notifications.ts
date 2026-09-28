@@ -22,16 +22,17 @@ export async function notifyLeaderOfCharacterChange(client:PoolClient,{
 }
 
 export async function notifyLeaderOfJoin(client:PoolClient,{
-  partyId,leaderId,memberName,becameFull,
+  partyId,leaderId,memberName,character,becameFull,
 }: {
   partyId:string;
   leaderId:string;
   memberName:string;
+  character:string;
   becameFull:boolean;
 }) {
   await notifyUsers(client,{
     partyId,recipients:[leaderId],kind:"PARTY_JOINED",title:"Player joined your party",
-    body:`${memberName} joined your party.`,
+    body:`${memberName} joined your party with ${character}.`,
   });
   if(becameFull) {
     await notifyUsers(client,{

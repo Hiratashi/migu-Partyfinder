@@ -39,7 +39,8 @@ async function claim() {
     const result=await client.query(`
       SELECT o.notification_id,n.user_id,n.kind,n.title,n.body,n.party_id,
              n.change_details,n.read_at,u.discord_id,u.access_disabled,
-             u.discord_guild_alerts_enabled,p.start_time,o.attempts,
+             u.discord_guild_alerts_enabled,u.discord_notifications_enabled,
+             p.start_time,o.attempts,
              o.fallback_required
       FROM discord_notification_outbox o
       JOIN notifications n ON n.id=o.notification_id
@@ -111,7 +112,7 @@ async function guildFallback(row,dmCode=null) {
   try {
     const sent=await discord(`/channels/${channel}/messages`,{
       method:'POST',body:JSON.stringify({
-        content:`<@${row.discord_id}> You have a private Partyfinder notification. Check ${origin}/notifications`,
+        content:`<@${row.discord_id}> ${message(row)}`.slice(0,2000),
         allowed_mentions:{users:[row.discord_id]},
         nonce:nonce(row.notification_id),enforce_nonce:true,
       }),
@@ -129,7 +130,11 @@ async function guildFallback(row,dmCode=null) {
 }
 
 async function deliver(row) {
-  // A resolved invitation/change and a suspended account need no DM.
+  // A resolved invitation/change or a suspended account needs no Discord alert.
+  if(!row.discord_notifications_enabled) {
+    await finish(row,{stop:true,error:'Discord notifications disabled by recipient'});
+    return;
+  }
   if(row.access_disabled ||
     (row.read_at && ['PARTY_INVITATION','PARTY_CHANGED'].includes(row.kind))) {
     await finish(row,{stop:true,error:'No longer actionable'});
