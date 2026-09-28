@@ -31,11 +31,12 @@ export default function DiscordFallbackPreference({initialEnabled,initialGuild}:
     <label className="row">
       <input type="checkbox" checked={guild} disabled={busy||!enabled}
         onChange={event=>void update("guildFallback",event.target.checked)}/>
-      Mention me in the guild if a bot DM cannot be delivered
+      Mention me in the guild instead of sending a DM
     </label>
     <p className="muted">
-      Guild messages show notification details, including party and character names,
-      to other guild members. Website notifications work even when Discord alerts are off.
+      Choose this to receive guild mentions even when DMs are available. Guild
+      members can see the notification details, including party and character names.
+      Website notifications work even when Discord alerts are off.
     </p>
     {error&&<p className="error" role="alert">{error}</p>}
   </section>;

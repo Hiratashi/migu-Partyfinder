@@ -17,9 +17,8 @@ deleted when the application next serves an authenticated request. Migration
    `DISCORD_ANNOUNCEMENT_CHANNEL_ID` to the ID of the read-only channel. The
    worker sends public notices only for newly created parties, with no pings.
    Optionally set `DISCORD_ALERT_CHANNEL_ID` to a read-only channel for private
-   alert fallbacks. It can be the same channel as announcements. A member must
-   enable the fallback in Profile & characters before the worker posts a
-   mention if Discord rejects their DM. The guild message includes the same
+   alerts. It can be the same channel as announcements. A member can choose
+   guild mentions instead of DMs in Profile & characters. The guild message includes the same
    notification details as the DM, so other members can read them. Discord
    delivery is enabled by default; members can disable all Discord alerts in
    Profile & characters without affecting their website inbox.
@@ -27,11 +26,11 @@ deleted when the application next serves an authenticated request. Migration
    `docker compose --profile discord up -d --build`. Without this profile the
    website continues to work and the queue waits for the worker.
 
-The worker checks current guild membership and any required role before a DM.
-It retries temporary failures and rate limits. If DMs are blocked, the website
-inbox still contains the alert. A member who opts in also receives a generic
-guild mention when `DISCORD_ALERT_CHANNEL_ID` is configured. If that channel
-is unavailable, website delivery still works. Start the bot before creating production test
+The worker checks current guild membership and any required role before delivery.
+It retries temporary failures and rate limits. If a member chooses DMs and
+Discord blocks them, the website inbox still contains the alert. Choosing
+guild mentions sends them directly when `DISCORD_ALERT_CHANNEL_ID` is configured.
+If that channel is unavailable, website delivery still works. Start the bot before creating production test
 parties to test announcements; older parties are not announced retroactively.
 Discord times use viewer-local timestamp tags. No slash commands are installed
 yet; party management remains on the website.

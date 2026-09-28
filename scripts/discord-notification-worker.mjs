@@ -162,7 +162,7 @@ async function deliver(row) {
       await finish(row,{stop:true,error:'Required guild role absent'});
       return;
     }
-    if(row.fallback_required) {
+    if(row.discord_guild_alerts_enabled) {
       await guildFallback(row);
       return;
     }
@@ -181,9 +181,8 @@ async function deliver(row) {
   } catch(error) {
     const label=`${phase}: HTTP ${error.status??'network'}${error.apiCode?` / Discord ${error.apiCode}`:''}`;
     if([50007,50278].includes(error.apiCode)) {
-      await pool.query(`UPDATE discord_notification_outbox
-        SET fallback_required=true WHERE notification_id=$1`,[row.notification_id]);
-      await guildFallback(row,error.apiCode);
+      await finish(row,{stop:true,
+        error:`DM unavailable (Discord ${error.apiCode}); website inbox only`});
     } else if(error.status===403 || error.status===404) {
       // A different 403/404 might be bot configuration rather than a user
       // preference. Preserve the alert so a corrected setup can retry it.
