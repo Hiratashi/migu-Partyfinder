@@ -5,6 +5,8 @@ import { db, query } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { getRaidById, raidSupportsStage } from "@/lib/raids";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyUsers } from "@/lib/notifications";
+import type { NotificationChange } from "@/lib/notifications";
 
 export async function PATCH(
   req:NextRequest,
@@ -83,14 +85,14 @@ export async function PATCH(
     ...new Set([...d.encounters,...d.practiceEncounterIds]),
   ];
 
-  const allowed=await query(`
-    SELECT id
+  const allowed=await query<{id:string;code:string;name:string}>(`
+    SELECT id,code,name
     FROM encounters
     WHERE raid_id=$1
-      AND id=ANY($2::uuid[])
-  `,[raid.id,allEncounterIds]);
+  `,[raid.id]);
 
-  if(allowed.rowCount!==allEncounterIds.length) {
+  const allowedIds=new Set(allowed.rows.map(row=>row.id));
+  if(allEncounterIds.some(encounterId=>!allowedIds.has(encounterId))) {
     return NextResponse.json({error:"invalid_encounter"},{status:400});
   }
 
@@ -98,6 +100,60 @@ export async function PATCH(
 
   try {
     await client.query("BEGIN");
+
+    const before=await client.query<{
+      title:string|null;
+      start_time:Date;
+      end_time:Date|null;
+      difficulty_stage:number;
+      is_practice:boolean;
+      need_physical:number;
+      need_magical:number;
+      need_dps:number;
+      need_support:number;
+      composition_restricted:boolean;
+      encounters:string[];
+      practice_encounters:string[];
+    }>(`
+      SELECT p.title,p.start_time,p.end_time,p.difficulty_stage,p.is_practice,
+             p.need_physical,p.need_magical,p.need_dps,p.need_support,
+             p.composition_restricted,
+             ARRAY(SELECT encounter_id::text FROM party_encounters WHERE party_id=p.id ORDER BY encounter_id) AS encounters,
+             ARRAY(SELECT encounter_id::text FROM party_practice_encounters WHERE party_id=p.id ORDER BY encounter_id) AS practice_encounters
+      FROM parties p
+      WHERE p.id=$1 AND p.leader_id=$2 AND p.status IN ('OPEN','FULL')
+      FOR UPDATE OF p
+    `,[id,user.id]);
+    if(!before.rowCount) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({error:"forbidden"},{status:403});
+    }
+    const previous=before.rows[0];
+    const changes:string[]=[];
+    const changeDetails:NotificationChange[]=[];
+    const add=(group:string,label:string,from:string,to:string,format?:"datetime")=>{
+      if(from===to)return;
+      if(!changes.includes(group))changes.push(group);
+      changeDetails.push({label,before:from,after:to,format});
+    };
+    add("title","Title",previous.title||"Untitled party",d.title||"Untitled party");
+    add("time","Start time",previous.start_time.toISOString(),new Date(d.startTime).toISOString(),"datetime");
+    add("time","End time",previous.end_time?.toISOString()??"None",d.endTime?new Date(d.endTime).toISOString():"None","datetime");
+    add("stage","Stage",String(previous.difficulty_stage),String(d.difficultyStage));
+    add("practice mode","Practice mode",previous.is_practice?"Yes":"No",d.isPractice?"Yes":"No");
+    if(previous.need_physical!==d.needPhysical || previous.need_magical!==d.needMagical ||
+       previous.need_dps!==d.needDps || previous.need_support!==d.needSupport ||
+       previous.composition_restricted!==d.compositionRestricted) {
+      const composition=(physical:number,magical:number,dps:number,support:number,restricted:boolean)=>
+        `${d.compositionModel==="DPS_SUPPORT"?`${dps} DPS`:`${physical} physical, ${magical} magical`}, ${support} support · ${restricted?"enforced":"flexible"}`;
+      add("role composition","Role composition",
+        composition(previous.need_physical,previous.need_magical,previous.need_dps,previous.need_support,previous.composition_restricted),
+        composition(d.needPhysical,d.needMagical,d.needDps,d.needSupport,d.compositionRestricted));
+    }
+    const names=new Map(allowed.rows.map(row=>[row.id,`${row.code} ${row.name}`]));
+    const encounterText=(ids:string[])=>ids.map(id=>names.get(id)??id).sort().join(", ")||"None";
+    add("encounters","Encounters",encounterText(previous.encounters),encounterText(d.encounters));
+    add("encounters","Practice encounters",encounterText(previous.practice_encounters),encounterText(d.practiceEncounterIds));
 
     await client.query(`
       UPDATE parties
@@ -156,6 +212,21 @@ export async function PATCH(
       "INSERT INTO audit_log(user_id,action,entity_type,entity_id) VALUES($1,'PARTY_EDIT','party',$2)",
       [user.id,id],
     );
+
+    if(changes.length) {
+      const members=await client.query<{user_id:string}>(`
+        SELECT user_id FROM party_members
+        WHERE party_id=$1 AND user_id<>$2 AND status IN ('ACCEPTED','INVITED')
+      `,[id,user.id]);
+      await notifyUsers(client,{
+        partyId:id,
+        recipients:members.rows.map(member=>member.user_id),
+        kind:"PARTY_CHANGED",
+        title:"Party details changed",
+        body:`The party ${changes.join(", ")} changed. Review the updated details.`,
+        changeDetails,
+      });
+    }
 
     await client.query("COMMIT");
     return NextResponse.json({ok:true});

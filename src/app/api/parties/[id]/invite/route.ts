@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sameOrigin } from "@/lib/security";
 import { limitWrite } from "@/lib/rate-limit";
+import { notifyUsers } from "@/lib/notifications";
 
 const schema=z.object({
   userId:z.string().uuid(),
@@ -38,13 +39,14 @@ export async function POST(
   try {
     await client.query("BEGIN");
 
-    const party=await client.query(
-      `SELECT 1
-       FROM parties
-       WHERE id=$1
-         AND leader_id=$2
-         AND status='OPEN'
-       FOR UPDATE`,
+    const party=await client.query<{title:string|null;raid_name:string}>(
+      `SELECT p.title,r.name AS raid_name
+       FROM parties p
+       JOIN raids r ON r.id=p.raid_id
+       WHERE p.id=$1
+         AND p.leader_id=$2
+         AND p.status='OPEN'
+       FOR UPDATE OF p`,
       [id,leader.id],
     );
 
@@ -62,6 +64,18 @@ export async function POST(
       await client.query("ROLLBACK");
       return NextResponse.json({error:"unknown_user"},{status:404});
     }
+
+    const prior=await client.query<{status:string;preferred_ids:string[]}>(`
+      SELECT pm.status,
+             ARRAY(SELECT character_id::text
+                   FROM party_invitation_preferred_characters
+                   WHERE party_id=$1 AND user_id=$2 ORDER BY character_id) AS preferred_ids
+      FROM party_members pm
+      WHERE pm.party_id=$1 AND pm.user_id=$2
+      FOR UPDATE OF pm
+    `,[id,body.data.userId]);
+    const sameInvitation=prior.rows[0]?.status==="INVITED" &&
+      JSON.stringify(prior.rows[0].preferred_ids)===JSON.stringify([...preferredCharacterIds].sort());
 
     if(preferredCharacterIds.length>0) {
       const characters=await client.query<{id:string}>(
@@ -152,6 +166,16 @@ export async function POST(
        )`,
       [leader.id,id,body.data.userId,preferredCharacterIds],
     );
+
+    if(!sameInvitation) {
+      await notifyUsers(client,{
+        partyId:id,
+        recipients:[body.data.userId],
+        kind:"PARTY_INVITATION",
+        title:"Party invitation",
+        body:`${leader.display_name??leader.username} invited you to ${party.rows[0].title||party.rows[0].raid_name}.`,
+      });
+    }
 
     await client.query("COMMIT");
     return NextResponse.json({ok:true});
