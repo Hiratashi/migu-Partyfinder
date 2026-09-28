@@ -1,7 +1,9 @@
 import { requireUser } from "@/lib/auth";
+import Link from "next/link";
 import { query } from "@/lib/db";
 import NotificationItem from "@/components/NotificationItem";
 import type { NotificationChange } from "@/lib/notifications";
+import { pruneExpiredNotifications } from "@/lib/notification-retention";
 
 type Notification={
   id:string;
@@ -15,11 +17,13 @@ type Notification={
 
 export default async function NotificationsPage({searchParams}:{searchParams:Promise<{view?:string}>}) {
   const user=await requireUser();
-  const archived=(await searchParams).view==="archive";
+  await pruneExpiredNotifications();
+  const unread=(await searchParams).view==="unread";
   const notifications=await query<Notification>(`
     SELECT id,title,body,party_id,read_at,created_at,change_details
     FROM notifications
-    WHERE user_id=$1 AND created_at ${archived?"<":">="} now()-interval '30 days'
+    WHERE user_id=$1 AND created_at>=now()-interval '30 days'
+      ${unread?"AND read_at IS NULL":""}
     ORDER BY created_at DESC,id DESC
     LIMIT 100
   `,[user.id]);
@@ -27,14 +31,14 @@ export default async function NotificationsPage({searchParams}:{searchParams:Pro
   return <main>
     <h1>Notifications</h1>
     <p>Invitations and party updates appear here.</p>
-    <nav className="notification-tabs" aria-label="Notification history">
-      <Link className={`btn ${archived?"":"active-nav"}`} href="/notifications">Recent</Link>
-      <Link className={`btn ${archived?"active-nav":""}`} href="/notifications?view=archive">Archive (30+ days)</Link>
+    <nav className="notification-tabs" aria-label="Notification filters">
+      <Link className={`btn ${unread?"":"active-nav"}`} href="/notifications">All</Link>
+      <Link className={`btn ${unread?"active-nav":""}`} href="/notifications?view=unread">Unread</Link>
     </nav>
     {notifications.rows.length===0
-      ? <p>{archived?"No archived notifications.":"No recent notifications."}</p>
+      ? <p>{unread?"No unread notifications.":"No notifications from the past 30 days."}</p>
       : <ul className="notification-list">
-          {notifications.rows.map(item=><NotificationItem key={item.id} item={{
+          {notifications.rows.map(item=><NotificationItem key={item.id} unreadOnly={unread} item={{
             id:item.id,
             title:item.title,
             body:item.body,
@@ -46,4 +50,3 @@ export default async function NotificationsPage({searchParams}:{searchParams:Pro
         </ul>}
   </main>;
 }
-import Link from "next/link";

@@ -94,6 +94,7 @@ async function finish(row,{messageId=null,stop=false,error=null,delay=0}={}) {
         next_attempt_at=now()+($5::int*interval '1 second')
     WHERE notification_id=$1
   `,[row.notification_id,messageId,stop,error,delay]);
+  if(stop)console.warn('Discord delivery stopped',row.notification_id,row.kind,error);
 }
 
 async function deliver(row) {

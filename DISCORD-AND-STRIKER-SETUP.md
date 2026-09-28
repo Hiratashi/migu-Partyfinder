@@ -5,6 +5,9 @@
 The website inbox is the durable record. Migration 033 adds a per-notification
 delivery queue and a separate new-party announcement queue. Nothing is sent to
 Discord until the `discord-worker` Compose profile is started.
+The inbox offers All and Unread views; notifications older than 30 days are
+deleted when the application next serves an authenticated request. Migration
+035 also removes preexisting entries past that age.
 
 1. In the Discord Developer Portal, create a bot for the OAuth application and
    add it to the guild. Give it permission to send messages in the chosen
