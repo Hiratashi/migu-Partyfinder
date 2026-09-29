@@ -151,11 +151,10 @@ async function claimReminderPeers(row) {
       JOIN parties p ON p.id=n.party_id AND p.start_time=d.start_time
       JOIN party_reminder_deliveries anchor ON anchor.party_id=d.party_id
         AND anchor.user_id=$2 AND anchor.start_time=d.start_time
-        AND anchor.kind=d.kind
+        AND anchor.kind=d.kind AND anchor.reminder_minutes=d.reminder_minutes
       WHERE n.party_id=$1 AND n.kind='PARTY_REMINDER'
         AND u.id<>$2 AND u.discord_notifications_enabled
         AND u.discord_guild_alerts_enabled AND NOT u.access_disabled
-        AND u.party_reminder_minutes=(SELECT party_reminder_minutes FROM users WHERE id=$2)
         AND o.delivered_at IS NULL AND o.stopped_at IS NULL
         AND o.next_attempt_at<=now()
         AND (o.leased_until IS NULL OR o.leased_until<now())

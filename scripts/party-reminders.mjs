@@ -30,8 +30,8 @@ export async function queuePartyReminders(pool) {
           AND now()<roster.start_time-(CASE WHEN roster.accepted>=roster.party_size THEN u.party_reminder_minutes
                     ELSE roster.leader_incomplete_reminder_minutes END)*interval '1 minute'+interval '10 minutes'
       ), claimed AS (
-        INSERT INTO party_reminder_deliveries(party_id,user_id,start_time,kind)
-        SELECT id,recipient_id,start_time,reminder_kind FROM eligible
+        INSERT INTO party_reminder_deliveries(party_id,user_id,start_time,kind,reminder_minutes)
+        SELECT id,recipient_id,start_time,reminder_kind,reminder_minutes FROM eligible
         ON CONFLICT DO NOTHING
         RETURNING party_id,user_id,start_time,kind
       )
