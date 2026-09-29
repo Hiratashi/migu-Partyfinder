@@ -169,6 +169,7 @@ export async function PATCH(
         need_support=$8,
         composition_restricted=$9,
         need_dps=$11,
+        leader_incomplete_reminder_minutes=$12,
         updated_at=now()
       WHERE id=$10
     `,[
@@ -183,6 +184,7 @@ export async function PATCH(
       d.compositionRestricted,
       id,
       d.needDps,
+      d.leaderIncompleteReminderMinutes,
     ]);
 
     await client.query(

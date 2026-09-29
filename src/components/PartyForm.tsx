@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import CountSelector from "./CountSelector";
 import DateTimeField from "./DateTimeField";
+import ReminderTiming from "./ReminderTiming";
 
 type E={id:string;code:string;name:string};
 
@@ -21,6 +22,7 @@ type Initial={
   compositionModel:"LEGACY"|"DPS_SUPPORT";
   needSupport:number;
   compositionRestricted?:boolean;
+  leaderIncompleteReminderMinutes?:number|null;
 };
 
 type Props={
@@ -72,6 +74,8 @@ export default function PartyForm({
   const [msg,setMsg]=useState("");
   const [announce,setAnnounce]=useState(true);
   const [pingRoles,setPingRoles]=useState(true);
+  const [leaderReminderEnabled,setLeaderReminderEnabled]=useState(initial?.leaderIncompleteReminderMinutes!==null);
+  const [leaderReminderMinutes,setLeaderReminderMinutes]=useState(String(initial?.leaderIncompleteReminderMinutes??30));
 
   const fullRun=
     selected.length===allIds.length&&
@@ -133,6 +137,12 @@ export default function PartyForm({
       return;
     }
 
+    const reminderMinutes=leaderReminderEnabled?Number(leaderReminderMinutes):null;
+    if(reminderMinutes!==null&&(!Number.isInteger(reminderMinutes)||reminderMinutes<1||reminderMinutes>10080)) {
+      setMsg("Choose 1–10080 minutes for the leader reminder.");
+      return;
+    }
+
     const body={
       raidSlug,
       title:String(f.get("title")||""),
@@ -149,6 +159,7 @@ export default function PartyForm({
       compositionModel:legacy?"LEGACY":"DPS_SUPPORT",
       needSupport:support,
       compositionRestricted:restricted,
+      leaderIncompleteReminderMinutes:reminderMinutes,
       ...(!partyId?{discordAnnounce:announce,discordPingRoles:announce&&pingRoles}:{}),
     };
 
@@ -362,6 +373,15 @@ export default function PartyForm({
       Turn this off if your group agrees to use a different composition.
       You can also toggle it directly from the party page.
     </p>
+
+    <section className="party-reminder-form stack" aria-label="Incomplete party reminder">
+      <h3>Open places reminder</h3>
+      <p className="muted">If this party still has open places, remind only the leader before it starts. Default: 30 minutes.</p>
+      <label className="row"><input type="checkbox" checked={leaderReminderEnabled}
+        onChange={event=>setLeaderReminderEnabled(event.target.checked)}/>
+        Remind the party leader</label>
+      {leaderReminderEnabled&&<ReminderTiming minutes={leaderReminderMinutes} onChange={setLeaderReminderMinutes}/>}
+    </section>
 
     {!partyId&&<section className="party-discord-options" aria-labelledby="party-discord-title">
       <h3 id="party-discord-title">Discord announcement</h3>

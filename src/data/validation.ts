@@ -14,6 +14,7 @@ export const partySchema = z.object({
   compositionModel: z.enum(["LEGACY","DPS_SUPPORT"]).default("LEGACY"),
   needSupport: z.number().int().min(0).max(12),
   compositionRestricted: z.boolean().default(true),
+  leaderIncompleteReminderMinutes:z.number().int().min(1).max(10080).nullable().default(30),
 }).superRefine((v,ctx)=>{
   if(v.compositionModel==="DPS_SUPPORT" && (v.needPhysical!==0 || v.needMagical!==0)) {
     ctx.addIssue({code:"custom",message:"Combined DPS parties cannot request physical or magical slots",path:["compositionModel"]});
