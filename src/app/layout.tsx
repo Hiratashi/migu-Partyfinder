@@ -43,6 +43,17 @@ export default async function RootLayout({
             </nav>
         }
         {children}
+        <footer className="site-footer">
+          <span>Enjoying Migu&apos;s Partyfinder? Supporting the project is optional.</span>
+          <div className="site-footer-links">
+            <a href="https://ko-fi.com/hiratashi" target="_blank" rel="noopener noreferrer">
+              Support on Ko-fi
+            </a>
+            <a href="https://ko-fi.com/hiratashi/goal?g=0" target="_blank" rel="noopener noreferrer">
+              View the goal
+            </a>
+          </div>
+        </footer>
       </div>
     </body>
   </html>;
