@@ -37,7 +37,10 @@ RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nod
 RUN mkdir -p /app/uploads/profile-images \
     && chown -R nextjs:nodejs /app/uploads
 
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# The source checkout can contain owner-only directories. The runtime user
+# must be able to traverse and serve bundled assets such as class icons.
+RUN chmod -R a+rX /app/public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
