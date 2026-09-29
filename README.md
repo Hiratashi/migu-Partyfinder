@@ -36,6 +36,10 @@ If you just want to use Partyfinder, start here:
 - Open party browser
 - Create, edit, join, leave, cancel and complete parties
 - Party invitations
+- Website notification inbox (All/Unread), party links, and 30-day retention
+- Discord bot announcements with optional raid-role pings, member alerts by DM or guild mention, and bot online presence when the worker runs
+- Member reconfirmation after material party changes, with Accept/Decline responses that retain a party seat
+- Configurable two-group Striker Party layout (4 + 4) and leader assignments for raids configured by an admin
 - Optional preferred character selection when inviting a player
 - DPS / Support composition requests for new parties, with optional enforcement
 - Doom Aporia encounter and stage selection
@@ -194,6 +198,7 @@ The public reverse proxy exposes only HTTP/HTTPS. The Next.js application remain
 
 Production deployment details are documented in:
 
+- `DISCORD-AND-STRIKER-SETUP.md` (bot, channels, Striker configuration, and rollout)
 - `PRODUCTION-DEPLOYMENT-3B.md`
 - `PRODUCTION-DEPLOYMENT-3B1.md`
 - `PRODUCTION-BASELINE.md`

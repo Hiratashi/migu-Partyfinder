@@ -67,6 +67,37 @@ Accepted members, including the leader, join an unassigned pool. The leader
 uses the assignment selector on the party detail page to place or move each
 person into Party 1 or Party 2. Each has four places; changes are checked in a
 transaction under a party lock, audited, and sent to the affected member's
-website inbox (and DM when the worker is enabled). A pending invitation does
+website inbox only. A pending invitation does
 not reserve a specific Striker Party place. Weekly Rosso/Berthe rotation is
 not automated because a reliable Rift rule/source has not been established.
+
+## Production rollout
+
+On the server, create two read-only member channels: one for public party posts
+(`DISCORD_ANNOUNCEMENT_CHANNEL_ID`) and one for targeted guild mentions
+(`DISCORD_ALERT_CHANNEL_ID`). Give the bot View Channel and Send Messages in
+both. Configure mentionable raid roles or grant the bot permission to mention
+the configured roles. Copy channel IDs using Discord Developer Mode, not names.
+Set the bot token and both channel IDs in the server's untracked `.env`; keep
+`APP_URL` at the public HTTPS origin. `DISCORD_REQUIRED_ROLE_ID` may stay empty.
+The bot must be installed in the guild identified by `DISCORD_GUILD_ID`.
+
+The repository's `scripts/deploy-production.sh` starts the default Compose
+services only. For a release with Discord enabled, back up the database, then
+from the production checkout run:
+
+```bash
+git pull --ff-only origin main
+sudo docker compose --profile discord config --quiet
+sudo docker compose --profile discord up -d --build
+sudo docker compose --profile discord ps
+sudo docker compose --profile discord logs --tail=80 migrate app discord-worker
+curl --fail --silent http://127.0.0.1:3000/api/health
+```
+
+Compose runs migrations and the seed before the app and worker start. Keep the
+named database and upload volumes: do not run `docker compose down -v`.
+Backups and restore testing are described in `DATABASE-BACKUP-RESTORE.md`.
+Check login, an existing party, an inbox alert, a new-party announcement and a
+targeted mention/DM before telling members the release is live. If the bot
+cannot send a DM, the website inbox still records the alert.
