@@ -134,6 +134,10 @@ async function guildFallback(row,dmCode=null) {
 }
 
 async function deliver(row) {
+  if(row.kind==='PARTY_GROUP_CHANGED') {
+    await finish(row,{stop:true,error:'Striker assignment shown in website inbox only'});
+    return;
+  }
   // A resolved invitation/change or a suspended account needs no Discord alert.
   if(!row.discord_notifications_enabled) {
     await finish(row,{stop:true,error:'Discord notifications disabled by recipient'});

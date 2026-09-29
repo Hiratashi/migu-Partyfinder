@@ -33,6 +33,9 @@ permission to mention the roles, or the roles must be mentionable. Joins,
 leaves, character changes, edits, and closures update the original post
 without pinging roles again. The post shows the roster, occupancy, remaining
 requested roles, and a party link.
+Striker Party 1/2 assignments appear in the website inbox only; moving a
+member between groups does not send a personal Discord alert or edit the
+public announcement.
 
 The worker checks current guild membership and any required role before delivery.
 It retries temporary failures and rate limits. If a member chooses DMs and
