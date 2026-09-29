@@ -138,6 +138,93 @@ async function guildFallback(row,dmCode=null) {
   }
 }
 
+// Claim matching guild recipients together. A personal DM never enters this batch.
+async function claimReminderPeers(row) {
+  const result=await pool.query(`
+    WITH peers AS (
+      SELECT o.notification_id
+      FROM discord_notification_outbox o
+      JOIN notifications n ON n.id=o.notification_id
+      JOIN users u ON u.id=n.user_id
+      JOIN party_reminder_deliveries d ON d.party_id=n.party_id
+        AND d.user_id=n.user_id AND d.kind='PARTY_REMINDER'
+      JOIN parties p ON p.id=n.party_id AND p.start_time=d.start_time
+      JOIN party_reminder_deliveries anchor ON anchor.party_id=d.party_id
+        AND anchor.user_id=$2 AND anchor.start_time=d.start_time
+        AND anchor.kind=d.kind
+      WHERE n.party_id=$1 AND n.kind='PARTY_REMINDER'
+        AND u.id<>$2 AND u.discord_notifications_enabled
+        AND u.discord_guild_alerts_enabled AND NOT u.access_disabled
+        AND u.party_reminder_minutes=(SELECT party_reminder_minutes FROM users WHERE id=$2)
+        AND o.delivered_at IS NULL AND o.stopped_at IS NULL
+        AND o.next_attempt_at<=now()
+        AND (o.leased_until IS NULL OR o.leased_until<now())
+      ORDER BY o.next_attempt_at LIMIT 19 FOR UPDATE OF o SKIP LOCKED
+    ), leased AS (
+      UPDATE discord_notification_outbox o
+      SET leased_until=now()+interval '90 seconds',attempts=attempts+1
+      FROM peers WHERE o.notification_id=peers.notification_id
+      RETURNING o.notification_id,o.attempts
+    )
+    SELECT l.notification_id,l.attempts,n.user_id,n.kind,n.title,n.body,n.party_id,
+           p.start_time,p.title AS party_title,r.name AS raid_name,u.discord_id
+    FROM leased l JOIN notifications n ON n.id=l.notification_id
+    JOIN users u ON u.id=n.user_id
+    JOIN parties p ON p.id=n.party_id JOIN raids r ON r.id=p.raid_id
+  `,[row.party_id,row.user_id]);
+  return result.rows;
+}
+
+async function guildReminderBatch(row) {
+  const channel=process.env.DISCORD_ALERT_CHANNEL_ID;
+  if(!channel) {
+    await guildFallback(row);
+    return;
+  }
+  const peers=await claimReminderPeers(row);
+  const ready=[row];
+  for(const peer of peers) {
+    try {
+      const member=await discord(`/guilds/${guild}/members/${peer.discord_id}`);
+      const role=process.env.DISCORD_REQUIRED_ROLE_ID;
+      if(role&&!member.roles?.includes(role)) {
+        await finish(peer,{stop:true,error:'Required guild role absent'});
+      } else ready.push(peer);
+    } catch(error) {
+      if(error.status===404)await finish(peer,{stop:true,error:'Recipient no longer in guild'});
+      else await finish(peer,{error:'Guild membership check failed',delay:3600});
+    }
+  }
+  const mentions=ready.map(item=>`<@${item.discord_id}>`).join(' ');
+  const ids=ready.map(item=>item.discord_id);
+  const key=ready.map(item=>item.notification_id).sort().join(':');
+  async function finishGroup({messageId=null,error=null,delay=0}={}) {
+    await pool.query(`
+      UPDATE discord_notification_outbox
+      SET delivered_at=CASE WHEN $2::text IS NOT NULL THEN now() ELSE delivered_at END,
+          discord_message_id=$2,last_error=$3,leased_until=NULL,
+          next_attempt_at=now()+($4::int*interval '1 second'),
+          delivery_method=CASE WHEN $2::text IS NOT NULL THEN 'GUILD' ELSE delivery_method END
+      WHERE notification_id=ANY($1::uuid[])
+    `,[ready.map(item=>item.notification_id),messageId,error,delay]);
+  }
+  try {
+    const sent=await discord(`/channels/${channel}/messages`,{
+      method:'POST',body:JSON.stringify({
+        content:`${mentions} ${message(row,2000-mentions.length-1)}`,
+        allowed_mentions:{parse:[],users:ids},
+        nonce:nonce(key),enforce_nonce:true,
+      }),
+    });
+    await finishGroup({messageId:sent.id});
+  } catch(error) {
+    const delay=error.status===429
+      ?Math.min(3600,Math.max(2,Math.ceil(error.retryAfter)))
+      :Math.min(3600,Math.pow(2,Math.min(row.attempts,10))*5);
+    await finishGroup({error:'Guild reminder delivery failed',delay});
+  }
+}
+
 async function deliver(row) {
   if(row.kind==='PARTY_GROUP_CHANGED') {
     await finish(row,{stop:true,error:'Striker assignment shown in website inbox only'});
@@ -176,7 +263,8 @@ async function deliver(row) {
       return;
     }
     if(row.discord_guild_alerts_enabled) {
-      await guildFallback(row);
+      if(row.kind==='PARTY_REMINDER')await guildReminderBatch(row);
+      else await guildFallback(row);
       return;
     }
     phase='open DM';

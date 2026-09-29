@@ -2862,3 +2862,15 @@ a { color:inherit; text-decoration:none; } button,input,select { font:inherit; }
     margin-top:0.35rem;
   }
 }
+
+/* Consistent reminder controls across the profile and party form. */
+.discord-alert-settings,.party-reminder-settings { width:100%; max-width:none; margin-top:16px; }
+.party-reminder-settings h2,.party-reminder-settings p,.party-reminder-form h3,.party-reminder-form p { margin:0; }
+.party-reminder-form { border-top:1px solid var(--border); padding-top:16px; }
+.form .party-reminder-form label.row { display:flex; flex-direction:row; align-items:center; color:var(--text); }
+.form .party-reminder-form input[type="checkbox"] { width:auto; margin:0; }
+.reminder-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; max-width:480px; }
+.reminder-grid .choice-btn { min-width:0; }
+.reminder-custom { display:grid; gap:6px; max-width:220px; }
+.reminder-custom input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#10131a; color:var(--text); }
+@media(max-width:400px){.reminder-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

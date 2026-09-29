@@ -20,6 +20,7 @@ type P={
   need_magical:number;
   need_support:number;
   composition_restricted:boolean;
+  leader_incomplete_reminder_minutes:number|null;
 };
 
 export default async function Edit({
@@ -84,6 +85,7 @@ export default async function Edit({
         needMagical:x.need_magical,
         needSupport:x.need_support,
         compositionRestricted:x.composition_restricted,
+        leaderIncompleteReminderMinutes:x.leader_incomplete_reminder_minutes,
       }}
     />
   </main>;
