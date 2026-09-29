@@ -1,5 +1,6 @@
 import pg from 'pg';
 import {createHash} from 'node:crypto';
+import {runDiscordPresence} from './discord-presence.mjs';
 
 const {Pool}=pg;
 const pool=new Pool({connectionString:process.env.DATABASE_URL,max:2});
@@ -12,6 +13,9 @@ if(!token||!guild||!origin||!/^https?:\/\//.test(origin)) {
 
 const api='https://discord.com/api/v10';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const presenceAbort=new AbortController();
+void runDiscordPresence(token,presenceAbort.signal).catch(error=>
+  console.error('Discord presence stopped',error.message));
 const nonce=id=>createHash('sha256').update(id).digest('hex').slice(0,24);
 
 async function discord(path,options={}) {
@@ -317,8 +321,8 @@ async function announceOne() {
 }
 
 let running=true;
-process.on('SIGTERM',()=>{running=false;});
-process.on('SIGINT',()=>{running=false;});
+process.on('SIGTERM',()=>{running=false;presenceAbort.abort();});
+process.on('SIGINT',()=>{running=false;presenceAbort.abort();});
 while(running) {
   try {
     const row=await claim();

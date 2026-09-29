@@ -38,6 +38,11 @@ member between groups does not send a personal Discord alert or edit the
 public announcement.
 
 The worker checks current guild membership and any required role before delivery.
+It also maintains a Discord Gateway session to show the bot as online, with
+no event intents or extra privileged permissions. If Gateway presence fails,
+HTTP notification delivery continues. Set the public Partyfinder URL in the
+app's Developer Portal → General Information → Description so members can find
+it on the bot profile; a local `APP_URL` is only for testing.
 It retries temporary failures and rate limits. If a member chooses DMs and
 Discord blocks them, the website inbox still contains the alert. Choosing
 guild mentions sends them directly when `DISCORD_ALERT_CHANNEL_ID` is configured.
