@@ -57,7 +57,7 @@ export async function DELETE(
       recipients:[userId],
       kind:"PARTY_REMOVED",
       title:"Removed from party",
-      body:"The leader removed you from this party. Your place is no longer reserved.",
+      body:`${user.display_name??user.username} removed you from this party. Your place is no longer reserved.`,
     });
     await client.query(`
       INSERT INTO audit_log(user_id,action,entity_type,entity_id,metadata)

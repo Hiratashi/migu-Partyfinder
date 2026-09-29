@@ -44,6 +44,7 @@ export async function requestReconfirmation(
           ON CONFLICT(party_id,user_id) DO UPDATE SET
             change_details=EXCLUDED.change_details,
             revision=gen_random_uuid(),
+            response='PENDING',
             updated_at=now()
         `,[partyId,member.user_id,JSON.stringify(merged)]);
       } else {

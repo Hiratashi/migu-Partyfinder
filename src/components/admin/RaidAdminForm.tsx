@@ -8,11 +8,14 @@ type Raid={
   slug:string;
   name:string;
   party_size:number;
+  group_count:number;
   supported_stages:number[];
   default_stage:number;
   practice_supported:boolean;
   active:boolean;
   sort_order:number;
+  discord_dps_role_id:string|null;
+  discord_support_role_id:string|null;
 };
 
 export default function RaidAdminForm({
@@ -26,6 +29,7 @@ export default function RaidAdminForm({
   const [slug,setSlug]=useState(raid?.slug??"");
   const [name,setName]=useState(raid?.name??"");
   const [partySize,setPartySize]=useState(raid?.party_size??6);
+  const [groupCount,setGroupCount]=useState(raid?.group_count??1);
   const [stageText,setStageText]=useState(
     (raid?.supported_stages??[1,2,3]).join(", "),
   );
@@ -37,6 +41,8 @@ export default function RaidAdminForm({
   );
   const [active,setActive]=useState(raid?.active??true);
   const [sortOrder,setSortOrder]=useState(raid?.sort_order??100);
+  const [discordDpsRoleId,setDiscordDpsRoleId]=useState(raid?.discord_dps_role_id??"");
+  const [discordSupportRoleId,setDiscordSupportRoleId]=useState(raid?.discord_support_role_id??"");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
 
@@ -74,11 +80,14 @@ export default function RaidAdminForm({
           slug,
           name,
           partySize,
+          groupCount,
           supportedStages,
           defaultStage,
           practiceSupported:practice,
           active,
           sortOrder,
+          discordDpsRoleId,
+          discordSupportRoleId,
         }),
       });
 
@@ -146,6 +155,23 @@ export default function RaidAdminForm({
           value={sortOrder}
           onChange={e=>setSortOrder(Number(e.target.value))}
         />
+      </label>
+
+      <label>
+        Discord DPS role ID (optional)
+        <input value={discordDpsRoleId} onChange={e=>setDiscordDpsRoleId(e.target.value.trim())} placeholder="Role ID" inputMode="numeric"/>
+      </label>
+      <label>
+        Discord support role ID (optional)
+        <input value={discordSupportRoleId} onChange={e=>setDiscordSupportRoleId(e.target.value.trim())} placeholder="Role ID" inputMode="numeric"/>
+      </label>
+
+      <label>
+        Party structure
+        <select value={groupCount} onChange={e=>setGroupCount(Number(e.target.value))}>
+          <option value={1}>One group</option>
+          <option value={2}>Two Striker Parties (4 + 4)</option>
+        </select>
       </label>
 
       <label>

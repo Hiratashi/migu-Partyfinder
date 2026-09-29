@@ -29,6 +29,7 @@ export default async function NewRaidParty({
       raidName={raid.name}
       encounters={encounters}
       partySize={raid.party_size}
+      groupCount={raid.group_count}
       supportedStages={raid.supported_stages}
       defaultStage={raid.default_stage}
       practiceSupported={raid.practice_supported}

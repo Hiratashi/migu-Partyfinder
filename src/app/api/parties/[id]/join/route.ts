@@ -169,6 +169,7 @@ export async function POST(
         partyId:id,
         leaderId:party.leader_id,
         memberName:user.display_name??user.username,
+        character:`${cr.rows[0].character_name} (${cr.rows[0].class_name})`,
         becameFull:acceptedCount<party.party_size &&
           Boolean(capacity&&capacity.accepted>=party.party_size),
       });

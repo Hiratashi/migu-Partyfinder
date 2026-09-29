@@ -9,6 +9,7 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "icons:refresh": "node scripts/refresh-class-icons.mjs",
+    "discord:worker": "node scripts/discord-notification-worker.mjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

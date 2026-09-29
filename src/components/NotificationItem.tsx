@@ -15,7 +15,7 @@ type Item={
   changeDetails:NotificationChange[];
 };
 
-export default function NotificationItem({item}:{item:Item}) {
+export default function NotificationItem({item,unreadOnly=false}:{item:Item;unreadOnly?:boolean}) {
   const router=useRouter();
   const [expanded,setExpanded]=useState(false);
   const [read,setRead]=useState(item.read);
@@ -26,6 +26,7 @@ export default function NotificationItem({item}:{item:Item}) {
       if(response.ok) {
         setRead(true);
         window.dispatchEvent(new Event("partyfinder:notifications-changed"));
+        if(unreadOnly)router.refresh();
       }
     } catch { /* Keep the alert unread if the request fails. */ }
   };

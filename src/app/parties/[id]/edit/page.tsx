@@ -8,6 +8,7 @@ type P={
   id:string;
   leader_id:string;
   raid_id:string;
+  group_count:number;
   title:string|null;
   start_time:Date;
   end_time:Date|null;
@@ -62,6 +63,7 @@ export default async function Edit({
       raidSlug={raid.slug}
       raidName={raid.name}
       partySize={raid.party_size}
+      groupCount={x.group_count}
       supportedStages={raid.supported_stages}
       defaultStage={raid.default_stage}
       practiceSupported={raid.practice_supported}

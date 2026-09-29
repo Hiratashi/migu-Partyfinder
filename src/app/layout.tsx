@@ -3,6 +3,7 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import SiteHeader from "@/components/SiteHeader";
 import { query } from "@/lib/db";
+import { pruneExpiredNotifications } from "@/lib/notification-retention";
 
 export const metadata = {
   title: "Migu's Partyfinder Tool",
@@ -15,6 +16,7 @@ export default async function RootLayout({
   children:React.ReactNode;
 }) {
   const user=await currentUser();
+  if(user)await pruneExpiredNotifications();
   const unread=user
     ? await query<{count:string}>("SELECT count(*)::text AS count FROM notifications WHERE user_id=$1 AND read_at IS NULL",[user.id])
     : null;

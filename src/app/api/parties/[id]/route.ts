@@ -220,7 +220,7 @@ export async function PATCH(
         recipients,
         kind:"PARTY_CHANGED",
         title:"Party details changed",
-        body:`The party ${changes.join(", ")} changed. Review the updated details.`,
+        body:`The party ${changes.join(", ")} changed. Open the party link to review and accept or decline the changes. Declining keeps your place; leave separately if needed.`,
         changeDetails,
       });
     }

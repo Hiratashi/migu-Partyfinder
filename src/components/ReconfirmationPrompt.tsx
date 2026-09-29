@@ -3,17 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LocalDateTime from "@/components/LocalDateTime";
-import ConfirmDialog from "@/components/ConfirmDialog";
 import type { NotificationChange } from "@/lib/notifications";
 
-export default function ReconfirmationPrompt({partyId,revision,changes}:{
+export default function ReconfirmationPrompt({partyId,revision,changes,response}:{
   partyId:string;
   revision:string;
   changes:NotificationChange[];
+  response:string;
 }) {
   const router=useRouter();
   const [busy,setBusy]=useState(false);
-  const [confirmDecline,setConfirmDecline]=useState(false);
   const [error,setError]=useState("");
   const display=(value:string,format?:"datetime")=>
     format==="datetime"&&value!=="None"?<LocalDateTime iso={value}/>:value;
@@ -32,19 +31,17 @@ export default function ReconfirmationPrompt({partyId,revision,changes}:{
         setError(result.message??"Could not respond. Refresh the party and review the latest changes.");
         return;
       }
-      if(action==="DECLINE")router.push("/my-parties");
       router.refresh();
     } catch {
       setError("Could not respond. Please try again.");
     } finally {
       setBusy(false);
-      setConfirmDecline(false);
     }
   }
 
   return <section className="card stack" aria-labelledby="reconfirmation-title">
-    <h2 id="reconfirmation-title">Needs reconfirmation</h2>
-    <p>Your place is reserved while you review these changes. Accept to stay, or Decline to leave and release your place.</p>
+    <h2 id="reconfirmation-title">{response==="DECLINED"?"You declined these changes":"Needs reconfirmation"}</h2>
+    <p>Your place remains reserved. Accept to confirm the current details, or decline while the group discusses another option. You can leave separately to free your place.</p>
     <div className="notification-change-list">
       {changes.map(change=><div className="notification-change" key={change.label}>
         <strong>{change.label}</strong>
@@ -56,9 +53,8 @@ export default function ReconfirmationPrompt({partyId,revision,changes}:{
     </div>
     <div className="row">
       <button className="btn primary" type="button" disabled={busy} onClick={()=>respond("ACCEPT")}>Accept changes</button>
-      <button className="btn danger" type="button" disabled={busy} onClick={()=>setConfirmDecline(true)}>Decline and leave</button>
+      {response!=="DECLINED"&&<button className="btn" type="button" disabled={busy} onClick={()=>respond("DECLINE")}>Decline changes</button>}
     </div>
     {error&&<p className="error" role="alert">{error}</p>}
-    {confirmDecline&&<ConfirmDialog open title="Decline the changed party?" message="You will leave this party and your place will become available." confirmLabel="Decline and leave" danger busy={busy} onConfirm={()=>respond("DECLINE")} onCancel={()=>!busy&&setConfirmDecline(false)}/>} 
   </section>;
 }

@@ -11,11 +11,14 @@ type Raid={
   slug:string;
   name:string;
   party_size:number;
+  group_count:number;
   supported_stages:number[];
   default_stage:number;
   practice_supported:boolean;
   active:boolean;
   sort_order:number;
+  discord_dps_role_id:string|null;
+  discord_support_role_id:string|null;
 };
 
 type Encounter={
@@ -35,8 +38,8 @@ export default async function RaidAdminDetail({
 
   const raid=await query<Raid>(`
     SELECT
-      id,slug,name,party_size,supported_stages,default_stage,
-      practice_supported,active,sort_order
+      id,slug,name,party_size,group_count,supported_stages,default_stage,
+      practice_supported,active,sort_order,discord_dps_role_id,discord_support_role_id
     FROM raids
     WHERE id=$1
   `,[id]);
@@ -62,6 +65,7 @@ export default async function RaidAdminDetail({
     </div>
 
     <h2>Raid settings</h2>
+    <p className="muted">Party structure applies to new parties. Existing parties keep their original layout.</p>
     <RaidAdminForm raid={current}/>
 
     <h2 className="section-title">Encounters</h2>

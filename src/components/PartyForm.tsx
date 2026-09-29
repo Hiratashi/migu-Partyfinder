@@ -28,6 +28,7 @@ type Props={
   raidName:string;
   encounters:E[];
   partySize:number;
+  groupCount?:number;
   supportedStages:number[];
   defaultStage:number;
   practiceSupported:boolean;
@@ -40,6 +41,7 @@ export default function PartyForm({
   raidName,
   encounters,
   partySize,
+  groupCount=1,
   supportedStages,
   defaultStage,
   practiceSupported,
@@ -68,6 +70,8 @@ export default function PartyForm({
     initial?.compositionRestricted??false,
   );
   const [msg,setMsg]=useState("");
+  const [announce,setAnnounce]=useState(true);
+  const [pingRoles,setPingRoles]=useState(true);
 
   const fullRun=
     selected.length===allIds.length&&
@@ -145,6 +149,7 @@ export default function PartyForm({
       compositionModel:legacy?"LEGACY":"DPS_SUPPORT",
       needSupport:support,
       compositionRestricted:restricted,
+      ...(!partyId?{discordAnnounce:announce,discordPingRoles:announce&&pingRoles}:{}),
     };
 
     setMsg(partyId?"Saving…":"Creating…");
@@ -175,6 +180,10 @@ export default function PartyForm({
   }
 
   return <form onSubmit={submit} className="card form stack">
+    {groupCount===2&&<p className="muted">
+      This raid uses two four-player Striker Parties. Everyone joins the
+      eight-player roster first; the leader assigns each member to a group.
+    </p>}
     <label>
       Optional title
       <input
@@ -353,6 +362,15 @@ export default function PartyForm({
       Turn this off if your group agrees to use a different composition.
       You can also toggle it directly from the party page.
     </p>
+
+    {!partyId&&<section className="party-discord-options" aria-labelledby="party-discord-title">
+      <h3 id="party-discord-title">Discord announcement</h3>
+      <label className="row"><input type="checkbox" checked={announce} onChange={e=>setAnnounce(e.target.checked)}/>
+        Post this party in the guild</label>
+      <label className="row"><input type="checkbox" checked={pingRoles} disabled={!announce} onChange={e=>setPingRoles(e.target.checked)}/>
+        Ping the configured DPS and support roles</label>
+      <p className="muted">Only roles requested by this party are mentioned.</p>
+    </section>}
 
     <div className="row">
       <button className="btn primary">
