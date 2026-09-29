@@ -363,13 +363,13 @@ export default function PartyForm({
       You can also toggle it directly from the party page.
     </p>
 
-    {!partyId&&<section className="card stack">
-      <h3>Discord announcement</h3>
+    {!partyId&&<section className="party-discord-options" aria-labelledby="party-discord-title">
+      <h3 id="party-discord-title">Discord announcement</h3>
       <label className="row"><input type="checkbox" checked={announce} onChange={e=>setAnnounce(e.target.checked)}/>
         Post this party in the guild</label>
       <label className="row"><input type="checkbox" checked={pingRoles} disabled={!announce} onChange={e=>setPingRoles(e.target.checked)}/>
         Ping the configured DPS and support roles</label>
-      <p className="muted">Only the roles requested by this party are mentioned. Guild members can mute these roles in Discord.</p>
+      <p className="muted">Only roles requested by this party are mentioned.</p>
     </section>}
 
     <div className="row">
