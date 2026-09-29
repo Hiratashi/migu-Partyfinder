@@ -51,6 +51,16 @@ parties to test announcements; older parties are not announced retroactively.
 Discord times use viewer-local timestamp tags. No slash commands are installed
 yet; party management remains on the website.
 
+The worker also queues party start reminders independently of page visits. Each
+member's Profile & characters setting defaults to 30 minutes before start and
+can be changed from 1 minute to 7 days, or turned off. If all places are filled,
+accepted members each receive a reminder at their chosen time. Otherwise only
+the leader receives one, with the number of open places. Reminders appear in
+the website inbox and follow the recipient's Discord delivery preference. The
+worker only catches up for ten minutes after a reminder is due; reminders
+already past that window when it starts are skipped. Reminders require the
+`discord-worker` Compose profile to be running.
+
 On material party edits, members may accept or decline the changed details.
 Declining keeps their seat and shows their response to all party members;
 leaving remains a separate action. A later material edit resets responses to

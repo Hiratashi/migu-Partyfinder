@@ -1,6 +1,7 @@
 import pg from 'pg';
 import {createHash} from 'node:crypto';
 import {runDiscordPresence} from './discord-presence.mjs';
+import {queuePartyReminders} from './party-reminders.mjs';
 
 const {Pool}=pg;
 const pool=new Pool({connectionString:process.env.DATABASE_URL,max:2});
@@ -321,10 +322,15 @@ async function announceOne() {
 }
 
 let running=true;
+let nextReminderCheck=0;
 process.on('SIGTERM',()=>{running=false;presenceAbort.abort();});
 process.on('SIGINT',()=>{running=false;presenceAbort.abort();});
 while(running) {
   try {
+    if(Date.now()>=nextReminderCheck) {
+      await queuePartyReminders(pool);
+      nextReminderCheck=Date.now()+30000;
+    }
     const row=await claim();
     if(row)await deliver(row);
     const announced=await announceOne();

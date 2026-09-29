@@ -4,6 +4,7 @@ import CharacterForm from "@/components/CharacterForm";
 import CharacterManager from "@/components/CharacterManager";
 import ProfileIdentityCard from "@/components/ProfileIdentityCard";
 import DiscordFallbackPreference from "@/components/DiscordFallbackPreference";
+import PartyReminderPreference from "@/components/PartyReminderPreference";
 
 type C={
   id:string;
@@ -33,6 +34,7 @@ type ProfileRow={
   profile_image_path:string|null;
   discord_guild_alerts_enabled:boolean;
   discord_notifications_enabled:boolean;
+  party_reminder_minutes:number|null;
 };
 
 type Capability={
@@ -87,7 +89,7 @@ export default async function Profile() {
       ORDER BY ch.character_name
     `,[user.id]),
     query<ProfileRow>(`
-      SELECT profile_image_path,discord_guild_alerts_enabled,discord_notifications_enabled
+      SELECT profile_image_path,discord_guild_alerts_enabled,discord_notifications_enabled,party_reminder_minutes
       FROM users
       WHERE id=$1
     `,[user.id]),
@@ -163,6 +165,7 @@ export default async function Profile() {
       initialEnabled={profile.rows[0]?.discord_notifications_enabled??true}
       initialGuild={profile.rows[0]?.discord_guild_alerts_enabled??false}
     />
+    <PartyReminderPreference initialMinutes={profile.rows[0]?.party_reminder_minutes??null}/>
 
     <section className="profile-character-section">
       <div className="profile-section-heading">

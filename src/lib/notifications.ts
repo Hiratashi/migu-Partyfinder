@@ -29,7 +29,7 @@ async function rosterSummary(client:PoolClient,partyId:string) {
 
 type Kind="PARTY_INVITATION"|"PARTY_CHANGED"|"PARTY_CLOSED"|"PARTY_REMOVED"|
   "PARTY_JOINED"|"PARTY_LEFT"|"PARTY_FULL"|"PARTY_CHARACTER_CHANGED"|
-  "PARTY_GROUP_CHANGED";
+  "PARTY_GROUP_CHANGED"|"PARTY_REMINDER";
 
 export async function notifyLeaderOfCharacterChange(client:PoolClient,{
   partyId,leaderId,memberName,before,after,
